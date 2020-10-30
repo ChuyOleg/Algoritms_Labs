@@ -71,5 +71,3 @@ function findResult(arr, number) {
 };
 
 console.log(findResult(array, 9));
-
-
