@@ -6,62 +6,6 @@ const parents = [];
 
 const randomFromTO = (from, to) => Math.floor(from + (Math.random() * (to - from + 1)));
 
-/*const crossing = (arr1, arr2, points) => {
-  const n = 2 ** points;
-  // n = кількість потомків 
-  for (let i = 0; i < n; i++) {
-    const template = new Array(points + 1).fill(0);
-    const arr = new Array(arr1.length).fill(0); // потомок
-    let num = i;
-
-    for (let j = 0; j <= points; j++) {
-      if (num > 0) {
-      	template[j] = 1;
-      }
-      num--
-      console.log(template);
-    }
-    //console.log(arr);
-  }
-}*/
-
-const evenNumbers = [2, 4, 6, 8, 10];
-const oddNumbers = [1, 3, 5, 7, 9];
-
-const newArr = new Array(100).fill(0);
-
-
-const func = (points) => {
-	for (let j = 0; j < 3; j++) {
-	  const Child = [];
-	  const p = [];
-	  const mainNum = Math.ceil((evenNumbers.length / (points + 1)));
-	  console.log('MainNum =>', mainNum);
-		let randomNum = randomFromTO(0, 1);
-		for (let i = 0; i < oddNumbers.length; i++) {
-		  if (i % mainNum === 0 && i != 0) randomNum = randomFromTO(0, 1);
-			console.log(randomNum);
-		  if (randomNum) Child.push(evenNumbers[i]);
-		  else Child.push(oddNumbers[i]);
-		}
-	  console.log(Child);
-	}
-}
-
-func(2);
-/*[0 0 0]
-[1 0 0]
-[0 1 0]
-[1 1 0]
-[0 0 1]
-[1 0 1]
-[0 1 1]
-[1 1 1]*/
-
-/*crossing(oddNumbers, evenNumbers, 2);*/
-
-process.exit();
-
 const createElements = (n, minPrice, maxPrice, minWeight, maxWeight) => {
   for (let pointer = 0; pointer < n; pointer++) {
     weights.push(randomFromTO(minWeight, maxWeight));
@@ -131,16 +75,28 @@ const firstCrossing = (firstParent, secondParent) => {
   return { person: child, capacity, price};
 }
 
-const secondCrossing = (firstParent, secondParent, quantityPoints) => {
-  const child = [];
-  const parents = [firstParent, secondParent];
-  for (let num = 0; num < firstParent['person'].length; num++) {
-    
+const pointCrossing = (points, firstParent, secondParent, numberOfChildren, maxCapacity) => {
+	let bestChild = null;
+	let bestChildCapacity = null;
+	let bestChildPrice = 0;
+	for (let childNum = 0; childNum < numberOfChildren; childNum++) {
+	  const child = [];
+	  const separator = Math.ceil((firstParent['person'].length / (points + 1)));
+		let randomNum = randomFromTO(0, 1);
+		for (let elemNum = 0; elemNum < firstParent['person'].length; elemNum++) {
+		  if (elemNum % separator === 0 && elemNum != 0) randomNum = randomFromTO(0, 1);
+		  if (randomNum) child.push(secondParent['person'][elemNum]);
+		  else child.push(firstParent['person'][elemNum]);
+		}
+	  const { capacity, price } = countCapacityAndPrice(child, weights, prices);
+    if (capacity <= maxCapacity && price > bestChildPrice){
+      bestChild = child;
+      bestChildCapacity = capacity;
+      bestChildPrice = price;
+	  }
+	  console.log('person =>', child, 'capacity =>', capacity, 'price =>', price);
   }
-}
-
-const thirdCrossing = (firstParent, secondParent) => {
-  
+  return { person: bestChild, capacity: bestChildCapacity, price: bestChildPrice };
 }
 
 const firstMutation = (child, weights, prices) => {
@@ -173,6 +129,8 @@ const secondMutation = (child, weights, prices) => {
 createElements(100, 2, 30, 1, 20);
 createParents(6, weights, prices, 500);
 const { firstParent, secondParent } = selectParents(parents);
-const child = firstCrossing(firstParent, secondParent);
-firstMutation(child, weights, prices);
+/*const child = firstCrossing(firstParent, secondParent);*/
+const child = pointCrossing(20, firstParent, secondParent, 100, 500);
+console.log('Best child =>', child);
+/*firstMutation(child, weights, prices);*/
 secondMutation(child, weights, prices);
