@@ -94,7 +94,6 @@ const pointCrossing = (points, firstParent, secondParent, numberOfChildren, maxC
       bestChildCapacity = capacity;
       bestChildPrice = price;
 	  }
-	  console.log('person =>', child, 'capacity =>', capacity, 'price =>', price);
   }
   return { person: bestChild, capacity: bestChildCapacity, price: bestChildPrice };
 }
@@ -110,7 +109,7 @@ const firstMutation = (child, weights, prices) => {
     child['capacity'] += weights[randomNum];
     child['price'] += prices[randomNum];
   }
-  return child;
+  return;
 }
 
 const secondMutation = (child, weights, prices) => {
@@ -123,8 +122,50 @@ const secondMutation = (child, weights, prices) => {
   const secondNum = child['person'][secondRandomNum];
   child['person'][firstRandomNum] = secondNum;
   child['person'][secondRandomNum] = firstNum;
-  return child;
+  const { capacity, price } = countCapacityAndPrice(child['person'], weights, prices);
+  child['capacity'] = capacity;
+  child['price'] = price;
+  return;
 }
+
+const firstLocalImprovement = (child, maxCapacity) => {
+  let ratio = 0;
+  let badGene = null;
+  for (let gene = 0; gene < child['person'].length; gene++) {
+    if (child['person'][gene] === 1) {
+      const newRatio = weights[gene] / prices[gene];
+      if (newRatio > ratio) {
+      	ratio = newRatio;
+        badGene = gene;      
+      }
+    }
+  }
+  for (let num = 0; num < weights.length; num++) {
+    if (child['person'][num] === 0) {
+      const newRatio = weights[num] / prices[num];
+      const difference = maxCapacity - (child['capacity'] - weights[badGene] + weights[num]);
+      if (ratio > newRatio && difference >= 0 && prices[num] > prices[badGene]) {
+        console.log(child);
+        console.log('badGene =>', badGene, weights[badGene], prices[badGene]);
+        console.log('newGene =>', num, weights[num], prices[num]);
+        child['person'][badGene] = 0;
+        child['person'][num] = 1;
+        const { capacity, price } = countCapacityAndPrice(child['person'], weights, prices);
+        child['capacity'] = capacity;
+        child['price'] = price;
+        console.log(child);
+        return;
+      }
+    }
+  }
+}
+
+const secondLocalImprovement = () => {
+  // вибрати найдешевиший ген і замінити його
+}
+
+// чи потрібні return в мутаціях?
+// дії, якщо потомок після мутації мертвий?
 
 createElements(100, 2, 30, 1, 20);
 createParents(6, weights, prices, 500);
@@ -134,3 +175,4 @@ const child = pointCrossing(20, firstParent, secondParent, 100, 500);
 console.log('Best child =>', child);
 /*firstMutation(child, weights, prices);*/
 secondMutation(child, weights, prices);
+firstLocalImprovement(child, 500);
