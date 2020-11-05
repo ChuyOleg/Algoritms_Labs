@@ -3,9 +3,12 @@
 const weights = [];
 const prices = [];
 const parents = [];
+const parents1 = [];
+const parents2 = [];
 
 const randomFromTO = (from, to) => Math.floor(from + (Math.random() * (to - from + 1)));
 
+// створення елементів
 const createElements = (n, minPrice, maxPrice, minWeight, maxWeight) => {
   for (let pointer = 0; pointer < n; pointer++) {
     weights.push(randomFromTO(minWeight, maxWeight));
@@ -13,6 +16,7 @@ const createElements = (n, minPrice, maxPrice, minWeight, maxWeight) => {
   }   
 };
 
+// створення батьків
 const createParents = (quantity, weights, prices, capacity) => {
   for (let pointer = 0; pointer < quantity; pointer++) {
     let parentPrice = 0;
@@ -30,9 +34,12 @@ const createParents = (quantity, weights, prices, capacity) => {
       }
   	}
   	parents.push({ person: parent, capacity: parentCapacity, price: parentPrice });
+  	parents1.push({ person: parent, capacity: parentCapacity, price: parentPrice });
+  	parents2.push({ person: parent, capacity: parentCapacity, price: parentPrice });
   }
 }
 
+// вибір батьків для схрещення
 const selectParents = (parents) => {
   let firstParent = parents[0];
   let firstIndex = 0;
@@ -49,6 +56,7 @@ const selectParents = (parents) => {
   return { firstParent, secondParent };
 }
 
+// повертаю вагу і ціну особини
 const countCapacityAndPrice = (person, weights, prices) => {
   let capacity = 0;
   let price = 0;
@@ -61,6 +69,7 @@ const countCapacityAndPrice = (person, weights, prices) => {
   return { capacity, price };
 }
 
+// схрещення вибором випадкового гена з батьків (50% на 50%)
 const firstCrossing = (firstParent, secondParent) => {
   const child = [];
   for (let num = 0; num < firstParent['person'].length; num++) {
@@ -75,6 +84,7 @@ const firstCrossing = (firstParent, secondParent) => {
   return { person: child, capacity, price};
 }
 
+// точкове схрещення (використовую 20 або 50 точок)
 const pointCrossing = (points, firstParent, secondParent, numberOfChildren, maxCapacity) => {
 	let bestChild = null;
 	let bestChildCapacity = null;
@@ -98,6 +108,7 @@ const pointCrossing = (points, firstParent, secondParent, numberOfChildren, maxC
   return { person: bestChild, capacity: bestChildCapacity, price: bestChildPrice };
 }
 
+// змінити значення гена на протилежне
 const firstMutation = (child, weights, prices) => {
   const randomNum = randomFromTO(0, 99);
   if (child['person'][randomNum]) {
@@ -112,6 +123,7 @@ const firstMutation = (child, weights, prices) => {
   return;
 }
 
+// поміняти місцями два гени
 const secondMutation = (child, weights, prices) => {
   const firstRandomNum = randomFromTO(0, 99);
   let secondRandomNum = randomFromTO(0, 99);
@@ -183,6 +195,7 @@ const secondLocalImprovement = (child, maxCapacity) => {
 	}
 }
 
+// заміна батьків на дитину після схрещення =>  мутації => покращення
 const exchangeParent = (child, parents) => {
 	const childPrice = child['price'];
 	let badParent = 0;
@@ -199,35 +212,55 @@ const exchangeParent = (child, parents) => {
   }
 }
 
+// оновлення рекорду
+const setRecord = (parents, record) => {
+  for (let parentNum = 0; parentNum < parents.length; parentNum++) {
+    if (parents[parentNum]['price'] > record['price']) {
+      record['price'] = parents[parentNum]['price'];
+      record['capacity'] = parents[parentNum]['capacity'];
+    }
+  }
+  return record;
+};
+
 // чи потрібні return в мутаціях?
 // дії, якщо потомок мертвий?
 
-/*const startProcess = () => {
-    
-};
-*/
 
+
+const record = { price: 0, capacity: 0 };
+const record1 = { price: 0, capacity: 0 };
+const record2 = { price: 0, capacity: 0 };
 createElements(100, 2, 30, 1, 20);
 createParents(6, weights, prices, 500);
-/*const child = firstCrossing(firstParent, secondParent);*/
+
+// запуск всіх попередніх функцій
+const startProcess = (maxIterations, parents, record, crossNum) => {
+    
+	for (let iterationNum = 0; iterationNum < maxIterations; iterationNum++) {
+	  const { firstParent, secondParent } = selectParents(parents);
+    let child = null;
+    if (crossNum === 1) child = firstCrossing(firstParent, secondParent);
+	  if (crossNum === 2) child = pointCrossing(50, firstParent, secondParent, 10, 500);
+	  if (crossNum === 3) child = pointCrossing(20, firstParent, secondParent, 10, 500);
+	  if (child['person'] != null) {
+	    firstMutation(child, weights, prices)
+	    //secondMutation(child, weights, prices);
+	      if (child['capacity'] > 500) {
+	        continue;
+	      }
+	    firstLocalImprovement(child, 500);
+	    //secondLocalImprovement(child, 500);
+	  	exchangeParent(child, parents);
+	  }
+	  setRecord(parents, record);
+	}
+
+console.log(record);
+};
 
 
-for (let n = 0; n < 100; n++) {
-  const { firstParent, secondParent } = selectParents(parents);
-  const child = pointCrossing(20, firstParent, secondParent, 10, 500);
-  if (child['person'] != null) {
-    firstMutation(child, weights, prices)
-      if (child['capacity'] > 500) {
-        console.log('BEFORE', child['capacity']);
-        continue;
-      }
-    console.log('After', child['capacity']);
-    firstLocalImprovement(child, 500);
-  	exchangeParent(child, parents);
-  }
-  /*console.log('Best child =>', child);*/
-  /*secondMutation(child, weights, prices);
-  secondLocalImprovement(child, 500);*/
-}
 
-console.log('!!!!!!!', parents);
+startProcess(1000, parents, record, 1);
+startProcess(1000, parents1, record1, 2);
+startProcess(1000, parents2, record2, 3);
