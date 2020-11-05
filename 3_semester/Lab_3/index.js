@@ -29,7 +29,7 @@ const createParents = (quantity, weights, prices, capacity) => {
         parentCapacity -= weights[num];
       }
   	}
-  	parents.push({ person: parent, weigth: parentCapacity, price: parentPrice });
+  	parents.push({ person: parent, capacity: parentCapacity, price: parentPrice });
   }
 }
 
@@ -128,6 +128,7 @@ const secondMutation = (child, weights, prices) => {
   return;
 }
 
+// заміна найгіршого гена у відношенні (вага / ціну)
 const firstLocalImprovement = (child, maxCapacity) => {
   let ratio = 0;
   let badGene = null;
@@ -145,34 +146,88 @@ const firstLocalImprovement = (child, maxCapacity) => {
       const newRatio = weights[num] / prices[num];
       const difference = maxCapacity - (child['capacity'] - weights[badGene] + weights[num]);
       if (ratio > newRatio && difference >= 0 && prices[num] > prices[badGene]) {
-        console.log(child);
-        console.log('badGene =>', badGene, weights[badGene], prices[badGene]);
-        console.log('newGene =>', num, weights[num], prices[num]);
         child['person'][badGene] = 0;
         child['person'][num] = 1;
         const { capacity, price } = countCapacityAndPrice(child['person'], weights, prices);
         child['capacity'] = capacity;
         child['price'] = price;
-        console.log(child);
         return;
       }
     }
   }
 }
 
-const secondLocalImprovement = () => {
-  // вибрати найдешевиший ген і замінити його
+// вибрати найдешевиший ген і замінити його (є ліміт ваги)
+const secondLocalImprovement = (child, maxCapacity) => {
+	let badGene = null;
+	let badPrice = 100;
+	const weigthLimit = 10;
+	for (let num = 0; num < weights.length; num++) {
+    if (child['person'][num] === 1 && prices[num] < badPrice) {
+      badGene = num;
+      badPrice = prices[num];
+    }
+	}
+	for (let num = 0; num < weights.length; num++) {
+    if (child['person'][num] === 0) {
+      const difference = maxCapacity - (child['capacity'] - weights[badGene] + weights[num]);
+      if (prices[num] > badPrice && weights[num] < weigthLimit && difference >= 0) {
+        child['person'][badGene] = 0;
+        child['person'][num] = 1;
+        const { capacity, price } = countCapacityAndPrice(child['person'], weights, prices);
+        child['capacity'] = capacity;
+        child['price'] = price;
+        return;
+       }  
+     }
+	}
+}
+
+const exchangeParent = (child, parents) => {
+	const childPrice = child['price'];
+	let badParent = 0;
+	let badParentPrice = null;
+  for (let parentNum = 0; parentNum < parents.length; parentNum++) {
+    const parentPrice = parents[parentNum]['price'];
+    if (parentPrice < badParentPrice || badParentPrice === null) {
+      badParent = parentNum;
+      badParentPrice = parentPrice;
+    }
+  }
+  if (parents[badParent]['price'] < childPrice) {
+    parents[badParent] = child;
+  }
 }
 
 // чи потрібні return в мутаціях?
-// дії, якщо потомок після мутації мертвий?
+// дії, якщо потомок мертвий?
+
+/*const startProcess = () => {
+    
+};
+*/
 
 createElements(100, 2, 30, 1, 20);
 createParents(6, weights, prices, 500);
-const { firstParent, secondParent } = selectParents(parents);
 /*const child = firstCrossing(firstParent, secondParent);*/
-const child = pointCrossing(20, firstParent, secondParent, 100, 500);
-console.log('Best child =>', child);
-/*firstMutation(child, weights, prices);*/
-secondMutation(child, weights, prices);
-firstLocalImprovement(child, 500);
+
+
+for (let n = 0; n < 100; n++) {
+  const { firstParent, secondParent } = selectParents(parents);
+  const child = pointCrossing(20, firstParent, secondParent, 10, 500);
+  if (child['person'] != null) {
+    firstMutation(child, weights, prices)
+      if (child['capacity'] > 500) {
+        console.log('BEFORE', child['capacity']);
+        continue;
+      }
+    console.log('After', child['capacity']);
+    firstLocalImprovement(child, 500);
+  	exchangeParent(child, parents);
+  }
+  /*console.log('Best child =>', child);*/
+  /*secondMutation(child, weights, prices);
+  secondLocalImprovement(child, 500);*/
+}
+
+console.log('!!!!!!!', parents);
