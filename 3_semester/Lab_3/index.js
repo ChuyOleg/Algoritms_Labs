@@ -2,23 +2,17 @@
 
 const weights = [];
 const prices = [];
-const parents1 = [];
-const parents2 = [];
-const parents3 = [];
-const parents4 = [];
-const parents5 = [];
-const parents6 = [];
-const parents7 = [];
-const parents8 = [];
-const parents9 = [];
-const parents10 = [];
-const parents11 = [];
-const parents12 = [];
+const parents = [];
+const records = [];
 
 const randomFromTO = (from, to) => Math.floor(from + (Math.random() * (to - from + 1)));
 
 // створення елементів
 const createElements = (n, minPrice, maxPrice, minWeight, maxWeight) => {
+  
+  weights.splice(0, weights.length);
+  prices.splice(0, prices.length);
+
   for (let pointer = 0; pointer < n; pointer++) {
     weights.push(randomFromTO(minWeight, maxWeight));
     prices.push(randomFromTO(minPrice, maxPrice));
@@ -26,7 +20,16 @@ const createElements = (n, minPrice, maxPrice, minWeight, maxWeight) => {
 };
 
 // створення батьків
-const createParents = (quantity, weights, prices, capacity) => {
+const createParents = (quantity, weights, prices, maxCapacity, numCopies) => {
+  
+  parents.splice(0, parents.length);
+  records.splice(0, records.length);
+
+  for (let parentNum = 0; parentNum < numCopies; parentNum++) {
+    parents.push([]);
+    records.push({ price: 0, capacity: 0 });
+  }
+
   for (let pointer = 0; pointer < quantity; pointer++) {
     let parentPrice = 0;
     let parentCapacity = 0;
@@ -34,7 +37,7 @@ const createParents = (quantity, weights, prices, capacity) => {
   	for (let num = 0; num < prices.length; num++) {
       const chanse = randomFromTO(0, 1);
       parentCapacity += weights[num];
-      if (chanse && (parentCapacity <= capacity)) {
+      if (chanse && (parentCapacity <= maxCapacity)) {
         parent.push(1);
         parentPrice += prices[num];
       } else {
@@ -42,18 +45,10 @@ const createParents = (quantity, weights, prices, capacity) => {
         parentCapacity -= weights[num];
       }
   	}
-  	parents1.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents2.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents3.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents4.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents5.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents6.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents7.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents8.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents9.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents10.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents11.push({ person: parent, capacity: parentCapacity, price: parentPrice });
-  	parents12.push({ person: parent, capacity: parentCapacity, price: parentPrice });
+    for (let parentNum = 0; parentNum < numCopies; parentNum++) {
+      parents[parentNum].push({ person: parent, capacity: parentCapacity, price: parentPrice });
+    }
+
   }
 }
 
@@ -185,7 +180,7 @@ const firstLocalImprovement = (child, maxCapacity) => {
     if (child['person'][num] === 0) {
       const newRatio = weights[num] / prices[num];
       const difference = maxCapacity - (child['capacity'] - weights[badGene] + weights[num]);
-      if (ratio > newRatio && difference >= 0 && prices[num] > prices[badGene]) {
+      if (ratio > newRatio && difference >= 0/* && prices[num] > prices[badGene]*/) {
         child['person'][badGene] = 0;
         child['person'][num] = 1;
         const { capacity, price } = countCapacityAndPrice(child['person'], weights, prices);
@@ -251,30 +246,10 @@ const setRecord = (parents, record) => {
   return record;
 };
 
-const record1 = { price: 0, capacity: 0 };
-const record2 = { price: 0, capacity: 0 };
-const record3 = { price: 0, capacity: 0 };
-const record4 = { price: 0, capacity: 0 };
-const record5 = { price: 0, capacity: 0 };
-const record6 = { price: 0, capacity: 0 };
-const record7 = { price: 0, capacity: 0 };
-const record8 = { price: 0, capacity: 0 };
-const record9 = { price: 0, capacity: 0 };
-const record10 = { price: 0, capacity: 0 };
-const record11 = { price: 0, capacity: 0 };
-const record12 = { price: 0, capacity: 0 };
-createElements(100, 2, 30, 1, 20);
-createParents(6, weights, prices, 500);
-
-const firstParameter = ['Рівномірний_50', '20_точок', '50_точок'];
-const secondParameter = ['заміна_одного', 'поміняти_два'];
-const thirdParameter = ['відношення', 'найдешевиший'];
-
-const parameters = { crossing: firstParameter, mutation: secondParameter, improvement: thirdParameter}
 
 // запуск всіх попередніх функцій
 const startProcess = (maxIterations, parents, record, crossName, mutationName, improveName) => {
-    
+
 	for (let iterationNum = 0; iterationNum < maxIterations; iterationNum++) {
 	  const { firstParent, secondParent } = selectParents(parents);
     let child = null;
@@ -282,7 +257,6 @@ const startProcess = (maxIterations, parents, record, crossName, mutationName, i
     if (crossName === 'Рівномірний_50%') child = firstCrossing(firstParent, secondParent, 500);
 	  if (crossName === '20_точок') child = pointCrossing(50, firstParent, secondParent, 10, 500);
 	  if (crossName === '50_точок') child = pointCrossing(20, firstParent, secondParent, 10, 500);
-
     if (child['person'] === null) {
       continue;
     }
@@ -300,24 +274,52 @@ const startProcess = (maxIterations, parents, record, crossName, mutationName, i
 	  setRecord(parents, record);
 	 
 	}
-
-console.log(record, crossName, mutationName, improveName, '\n');
 };
 
-const testParameters = (parameters, testParName) => {
+const crossing = ['Рівномірний_50%', '20_точок', '50_точок'];
+const mutation = ['заміна_одного', 'поміняти_два'];
+const improvement = ['відношення', 'найдешевиший'];
+
+const parameters = { crossing, mutation, improvement };
+
+
+const testParameters = (parameters, testParNum, testParName) => {
   
+  const numAllCases = crossing.length * mutation.length * improvement.length;
+  console.log(numAllCases); 
+
+  const mainResult = new Array(parameters[testParName].length).fill(0);
+  for (let attemp = 0; attemp < 100; attemp++) {
+    createElements(100, 2, 30, 1, 20);
+    createParents(6, weights, prices, 500, numAllCases);
+    for (let iter = 0; iter < parameters[testParName].length; iter++) {
+      if (testParNum === 0) {
+        startProcess(1000, parents[iter], records[iter], parameters[testParName][iter], parameters['mutation'][0], parameters['improvement'][0]);
+      }
+      if (testParNum === 1) {
+        startProcess(1000, parents[iter], records[iter], parameters['crossing'][0], parameters[testParName][iter], parameters['imrpovement'][0]);
+      }
+      if (testParNum === 2) {
+        startProcess(1000, parents[iter], records[iter], parameters['crossing'][0], parameters['mutation'][0], parameters[testParName][iter]);
+      }
+    }
+ 
+    let bestResult = records[0];
+    let bestResultNum = 0;
+    
+    for (let recordNum = 0; recordNum < records.length; recordNum++) {
+      if (records[recordNum]['price'] > bestResult['price']) {
+        bestResult = records[recordNum];
+        bestResultNum = recordNum;
+      }
+    }
+    mainResult[bestResultNum] += 1;
+    /*console.log(bestResultNum);
+    console.log(bestResult);*/
+  }
+  console.log(mainResult);
+  console.log(testParName);
+  console.log(parameters);
 }
 
-/*startProcess(10, parents1, record1, 'Рівномірний_50%', 'заміна_одного', 'відношення');
-startProcess(1000, parents2, record2, 'Рівномірний_50%', 'заміна_одного', 'найдешевиший');
-startProcess(1000, parents3, record3, 'Рівномірний_50%', 'поміняти_два', 'відношення');
-startProcess(1000, parents4, record4, 'Рівномірний_50%', 'поміняти_два', 'найдешевиший');
-startProcess(1000, parents5, record5, '20_точок', 'заміна_одного', 'відношення');
-startProcess(10, parents6, record6, '20_точок', 'заміна_одного', 'найдешевиший');
-startProcess(1000, parents7, record7, '20_точок', 'поміняти_два', 'відношення');
-startProcess(1000, parents8, record8, '20_точок', 'поміняти_два', 'найдешевиший');
-startProcess(1000, parents9, record9, '50_точок', 'заміна_одного', 'відношення');
-startProcess(1000, parents10, record10, '50_точок', 'заміна_одного', 'найдешевиший');
-*/startProcess(1000, parents11, record11, '50_точок', 'поміняти_два', 'відношення');
-/*startProcess(1000, parents12, record12, '50_точок', 'поміняти_два', 'найдешевиший');*/
-console.log(parameters);
+testParameters(parameters, 0, 'crossing');
