@@ -282,25 +282,25 @@ const improvement = ['відношення', 'найдешевиший'];
 
 const parameters = { crossing, mutation, improvement };
 
-
-const testParameters = (parameters, testParNum, testParName) => {
+// Тестування всіх параметрів 
+const testParameters = () => {
   
   const numAllCases = crossing.length * mutation.length * improvement.length;
-  console.log(numAllCases); 
+  const mainResult = new Array(numAllCases).fill(0);
 
-  const mainResult = new Array(parameters[testParName].length).fill(0);
   for (let attemp = 0; attemp < 100; attemp++) {
     createElements(100, 2, 30, 1, 20);
     createParents(6, weights, prices, 500, numAllCases);
-    for (let iter = 0; iter < parameters[testParName].length; iter++) {
-      if (testParNum === 0) {
-        startProcess(1000, parents[iter], records[iter], parameters[testParName][iter], parameters['mutation'][0], parameters['improvement'][0]);
-      }
-      if (testParNum === 1) {
-        startProcess(1000, parents[iter], records[iter], parameters['crossing'][0], parameters[testParName][iter], parameters['imrpovement'][0]);
-      }
-      if (testParNum === 2) {
-        startProcess(1000, parents[iter], records[iter], parameters['crossing'][0], parameters['mutation'][0], parameters[testParName][iter]);
+    let combinationNum = 0;
+    for (let firstPar = 0; firstPar < crossing.length; firstPar++) {
+      for (let secondPar = 0; secondPar < mutation.length; secondPar++) {
+        for (let thirdPar = 0; thirdPar < improvement.length; thirdPar++) {
+          startProcess(500, parents[combinationNum], records[combinationNum], crossing[firstPar], mutation[secondPar], improvement[thirdPar]);
+          combinationNum++;
+          if (attemp === 99) {
+            console.log(crossing[firstPar], mutation[secondPar], improvement[thirdPar]);
+          }
+        }
       }
     }
  
@@ -314,12 +314,13 @@ const testParameters = (parameters, testParNum, testParName) => {
       }
     }
     mainResult[bestResultNum] += 1;
-    /*console.log(bestResultNum);
-    console.log(bestResult);*/
+
   }
   console.log(mainResult);
-  console.log(testParName);
   console.log(parameters);
+  console.log(records);
 }
 
-testParameters(parameters, 0, 'crossing');
+console.time('test');
+testParameters(parameters);
+console.timeEnd('test');
