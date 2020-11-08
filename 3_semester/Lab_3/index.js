@@ -105,13 +105,24 @@ const pointCrossing = (points, firstParent, secondParent, numberOfChildren, maxC
 	let bestChildPrice = 0;
 	for (let childNum = 0; childNum < numberOfChildren; childNum++) {
 	  const child = [];
-	  const separator = Math.ceil((firstParent['person'].length / (points + 1)));
-		let randomNum = randomFromTO(0, 1);
-		for (let elemNum = 0; elemNum < firstParent['person'].length; elemNum++) {
-		  if (elemNum % separator === 0 && elemNum != 0) randomNum = randomFromTO(0, 1);
-		  if (randomNum) child.push(secondParent['person'][elemNum]);
-		  else child.push(firstParent['person'][elemNum]);
-		}
+	  const separator = Math.floor((firstParent['person'].length / (points + 1)));
+    let remainder = firstParent['person'].length - ((points + 1) * separator);
+    let randomNum = null;
+    let elemNum = 0;
+
+    for (let intervalNum = 0; intervalNum < (points + 1); intervalNum++) {
+      randomNum = randomFromTO(0, 1);
+      for (let elemNumInInterval = 0; elemNumInInterval < separator; elemNumInInterval++) {
+        if (randomNum) child.push(secondParent['person'][elemNum++]);
+        else child.push(firstParent['person'][elemNum++]);
+      }
+      if (remainder > 0) {
+        if (randomNum) child.push(secondParent['person'][elemNum++]);
+        else child.push(firstParent['person'][elemNum++]);
+        remainder--; 
+      }
+    }
+
 	  const { capacity, price } = countCapacityAndPrice(child, weights, prices);
     if (capacity <= maxCapacity && price > bestChildPrice){
       bestChild = child;
@@ -180,7 +191,7 @@ const firstLocalImprovement = (child, maxCapacity) => {
     if (child['person'][num] === 0) {
       const newRatio = weights[num] / prices[num];
       const difference = maxCapacity - (child['capacity'] - weights[badGene] + weights[num]);
-      if (ratio > newRatio && difference >= 0/* && prices[num] > prices[badGene]*/) {
+      if (ratio > newRatio && difference >= 0) {
         child['person'][badGene] = 0;
         child['person'][num] = 1;
         const { capacity, price } = countCapacityAndPrice(child['person'], weights, prices);
@@ -272,7 +283,6 @@ const startProcess = (maxIterations, parents, record, crossName, mutationName, i
     
 	  exchangeParent(child, parents);
 	  setRecord(parents, record);
-	 
 	}
 };
 
@@ -280,47 +290,63 @@ const crossing = ['Рівномірний_50%', '20_точок', '50_точок'
 const mutation = ['заміна_одного', 'поміняти_два'];
 const improvement = ['відношення', 'найдешевиший'];
 
-const parameters = { crossing, mutation, improvement };
+// Пошук найкращих результатів за час усього тестування
+const findBestResults = (records, bestResults) => {
+  for (let index = 0; index < records.length; index++) {
+    if (records[index]['price'] > bestResults[index]['bestPrice']) {
+      bestResults[index]['bestPrice'] = records[index]['price'];
+      bestResults[index]['capacity'] = records[index]['capacity'];
+    }
+  }
+}
 
 // Тестування всіх параметрів 
-const testParameters = () => {
+const testParameters = (quantityInspections, quantityCrossing) => {
   
   const numAllCases = crossing.length * mutation.length * improvement.length;
-  const mainResult = new Array(numAllCases).fill(0);
+  const bestResults = [];
+  for (let index = 0; index < numAllCases; index++) {
+    bestResults.push({ bestPrice: 0, capacity: 0, name: '_', wins: 0 });
+  }
 
-  for (let attemp = 0; attemp < 100; attemp++) {
+  for (let attemp = 0; attemp < quantityInspections; attemp++) {
     createElements(100, 2, 30, 1, 20);
     createParents(6, weights, prices, 500, numAllCases);
     let combinationNum = 0;
     for (let firstPar = 0; firstPar < crossing.length; firstPar++) {
       for (let secondPar = 0; secondPar < mutation.length; secondPar++) {
         for (let thirdPar = 0; thirdPar < improvement.length; thirdPar++) {
-          startProcess(500, parents[combinationNum], records[combinationNum], crossing[firstPar], mutation[secondPar], improvement[thirdPar]);
-          combinationNum++;
-          if (attemp === 99) {
-            console.log(crossing[firstPar], mutation[secondPar], improvement[thirdPar]);
+          startProcess(quantityCrossing, parents[combinationNum], records[combinationNum], crossing[firstPar], mutation[secondPar], improvement[thirdPar]);
+          findBestResults(records, bestResults);
+          if (attemp === (quantityInspections - 1)) {
+            const nameOfCombination = crossing[firstPar] + ' | ' + mutation[secondPar] + ' | ' + improvement[thirdPar];
+            bestResults[combinationNum].name = nameOfCombination;
           }
+          combinationNum++;
         }
       }
     }
- 
+    
+    // console.log(records);
     let bestResult = records[0];
-    let bestResultNum = 0;
+    let bestResultNum = [0];
     
     for (let recordNum = 0; recordNum < records.length; recordNum++) {
       if (records[recordNum]['price'] > bestResult['price']) {
         bestResult = records[recordNum];
-        bestResultNum = recordNum;
+        bestResultNum = [recordNum];
+      } else if (records[recordNum]['price'] === bestResult['price']) {
+        bestResultNum.push(recordNum);
       }
     }
-    mainResult[bestResultNum] += 1;
+    // console.log(bestResultNum);
+    bestResultNum.forEach(el => bestResults[el].wins++);
 
   }
-  console.log(mainResult);
-  console.log(parameters);
-  console.log(records);
+
+  console.table(bestResults);
 }
 
 console.time('test');
-testParameters(parameters);
+testParameters(100, 500);
 console.timeEnd('test');
