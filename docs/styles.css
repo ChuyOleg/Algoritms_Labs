@@ -101,12 +101,12 @@ ul {
   border-radius: 50%;
 }
 
-.whiteCounter div {
+.whiteCounter {
   background: #efe5e5;
   border: 3px solid white;
 }
 
-.blackCounter div {
+.blackCounter {
   background: #1f1525;
   border: 3px solid black;
 }
@@ -137,6 +137,39 @@ ul {
   text-align: center;
 }
 
+.quantity {
+  position: absolute;
+  top: -50px;
+  left: 20px;
+  height: 36px;
+  width: 70px; 
+  display: flex;
+}
+
+.qBlack {
+  left: 300px;
+}
+
+.quantity div {
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  background: #efe5e5;
+  border: 3px solid white;
+}
+
+.qBlack div {
+  left: 300px;
+  background: #1f1525;
+  border: 3px solid black;
+}
+
+.quantity span {
+  margin-left: 10px;
+  line-height: 36px;
+  font-size: 20px;
+}
+
 @media only screen and (max-width: 600px) {
   #playField {
     width: 300px;
@@ -154,5 +187,8 @@ ul {
   }
   .counter div {
     margin: 7px auto;
+  }
+  .qBlack {
+    left: 200px;
   }
 }
