@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	<title>Reversi</title>
+</head>
+<body>
+  <div id="menu">
+  	<div id="easy" class="level">EASY</div>
+  	<div id="normal" class="level">NORMAL</div>
+  	<div id="hard" class="level">HARD</div>
+  	<div id="start">START</div>
+  </div>
+  <a href="#" class="reboot"></a>
+  <div id="playField">
+  	<ul class="list 0">
+  		<li class="counter 0 whiteCounter"><div></div></li>
+  		<li class="counter 1 whiteCounter"><div></div></li>
+  		<li class="counter 2 whiteCounter"><div></div></li>
+  		<li class="counter 3 whiteCounter"><div></div></li>
+  		<li class="counter 4 whiteCounter"><div></div></li>
+  		<li class="counter 5 whiteCounter"><div></div></li>
+  		<li class="counter 6 whiteCounter"><div></div></li>
+  		<li class="counter 7 whiteCounter"><div></div></li>
+  	</ul>
+  	<ul class="list 1">
+  		<li class="counter 0 whiteCounter"><div></div></li>
+  		<li class="counter 1 whiteCounter"><div></div></li>
+  		<li class="counter 2 whiteCounter"><div></div></li>
+  		<li class="counter 3 whiteCounter"><div></div></li>
+  		<li class="counter 4 whiteCounter"><div></div></li>
+  		<li class="counter 5 whiteCounter"><div></div></li>
+  		<li class="counter 6 whiteCounter"><div></div></li>
+  		<li class="counter 7 whiteCounter"><div></div></li>
+  	</ul>
+  	<ul class="list 2">
+  		<li class="counter 0 whiteCounter"><div></div></li>
+  		<li class="counter 1 whiteCounter"><div></div></li>
+  		<li class="counter 2 whiteCounter"><div></div></li>
+  		<li class="counter 3 whiteCounter"><div></div></li>
+  		<li class="counter 4 whiteCounter"><div></div></li>
+  		<li class="counter 5 whiteCounter"><div></div></li>
+  		<li class="counter 6 whiteCounter"><div></div></li>
+  		<li class="counter 7 whiteCounter"><div></div></li>
+  	</ul>
+  	<ul class="list 3">
+  		<li class="counter 0 whiteCounter"><div></div></li>
+  		<li class="counter 1 whiteCounter"><div></div></li>
+  		<li class="counter 2 whiteCounter"><div></div></li>
+  		<li class="counter 3 whiteCounter"><div></div></li>
+  		<li class="counter 4 whiteCounter"><div></div></li>
+  		<li class="counter 5 whiteCounter"><div></div></li>
+  		<li class="counter 6 whiteCounter"><div></div></li>
+  		<li class="counter 7 whiteCounter"><div></div></li>
+  	</ul>
+  	<ul class="list 4">
+  		<li class="counter 0 whiteCounter"><div></div></li>
+  		<li class="counter 1 whiteCounter"><div></div></li>
+  		<li class="counter 2 whiteCounter"><div></div></li>
+  		<li class="counter 3 whiteCounter"><div></div></li>
+  		<li class="counter 4 whiteCounter"><div></div></li>
+  		<li class="counter 5 whiteCounter"><div></div></li>
+  		<li class="counter 6 whiteCounter"><div></div></li>
+  		<li class="counter 7 whiteCounter"><div></div></li>
+  	</ul>
+  	<ul class="list 5">
+  		<li class="counter 0 whiteCounter"><div></div></li>
+  		<li class="counter 1 whiteCounter"><div></div></li>
+  		<li class="counter 2 whiteCounter"><div></div></li>
+  		<li class="counter 3 whiteCounter"><div></div></li>
+  		<li class="counter 4 blackCounter"><div></div></li>
+  		<li class="counter 5 whiteCounter"><div></div></li>
+  		<li class="counter 6 whiteCounter"><div></div></li>
+  		<li class="counter 7 whiteCounter"><div></div></li>
+  	</ul>
+  	<ul class="list 6">
+  		<li class="counter 0 whiteCounter"><div></div></li>
+  		<li class="counter 1 whiteCounter"><div></div></li>
+  		<li class="counter 2 whiteCounter"><div></div></li>
+  		<li class="counter 3 whiteCounter"><div></div></li>
+  		<li class="counter 4 whiteCounter"><div></div></li>
+  		<li class="counter 5 whiteCounter"><div></div></li>
+  		<li class="counter 6 whiteCounter"><div></div></li>
+  		<li class="counter 7 whiteCounter"><div></div></li>
+  	</ul>
+  	<ul class="list 7">
+  		<li class="counter 0 whiteCounter"><div></div></li>
+  		<li class="counter 1 blackCounter"><div></div></li>
+  		<li class="counter 2 whiteCounter"><div></div></li>
+  		<li class="counter 3 whiteCounter"><div></div></li>
+  		<li class="counter 4 blackCounter"><div></div></li>
+  		<li class="counter 5 whiteCounter"><div></div></li>
+  		<li class="counter 6 whiteCounter"><div></div></li>
+  		<li class="counter 7 whiteCounter"><div></div></li>
+  	</ul>
+	  <ul class="numberList">
+	  	<li class="mark">1</li>
+	  	<li class="mark">2</li>
+	  	<li class="mark">3</li>
+	  	<li class="mark">4</li>
+	  	<li class="mark">5</li>
+	  	<li class="mark">6</li>
+	  	<li class="mark">7</li>
+	  	<li class="mark">8</li>
+	  </ul>
+	  <ul class="letterList">
+	  	<li class="mark">a</li>
+	  	<li class="mark">b</li>
+	  	<li class="mark">c</li>
+	  	<li class="mark">d</li>
+	  	<li class="mark">e</li>
+	  	<li class="mark">f</li>
+	  	<li class="mark">g</li>
+	  	<li class="mark">h</li>
+	  </ul>
+  </div>
+</body>
+</html>
