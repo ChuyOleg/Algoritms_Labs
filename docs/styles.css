@@ -1,0 +1,158 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: #FFD6D6;
+  overflow: hidden;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#menu {
+  box-sizing: border-box;
+  border: 1px solid black;
+  height: 30%;
+  width: 40%;
+  position: absolute;
+  top: 30%;
+  left: 30%;
+  background: #ADE463;
+  display: none;
+}
+
+.level {
+  border-bottom: 1px solid  black;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+}
+
+.level:hover {
+  cursor: pointer;
+  background: #E66868;
+}
+
+#start {
+  border: 1px solid black;
+  border-radius: 10px;
+  height: 40px;
+  width: 50%;
+  text-align: center;
+  line-height: 40px;
+  margin: 15px auto;
+}
+
+#start:hover {
+  background: green;
+  cursor: pointer;
+}
+
+.reboot {
+  position: absolute;
+  top: 5%;
+  right: 5%;
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  background-image: url('img/reboot.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.reboot:hover {
+  transition: transform 5s linear 0s;
+  transform: rotate(360deg);
+}
+
+#playField {
+  margin: 100px auto;
+  margin-bottom: 0;
+  width: 500px;
+  height: 500px;
+  background: #e7cfa9;
+  border: 3px solid #a54d18;
+  position: relative;
+}
+
+.list {
+  box-sizing: border-box;
+  width: 100%;
+  height: 12.5%;
+  display: flex;
+  background: #377a41;
+}
+
+.counter {
+  box-sizing: border-box;
+  width: 12.5%;
+  border: 1px solid #a54d18;
+}
+
+.counter div {
+  box-sizing: border-box;
+  margin: 11px auto;
+  height: 65%;
+  width: 65%;
+  border-radius: 50%;
+}
+
+.whiteCounter div {
+  background: #efe5e5;
+  border: 3px solid white;
+}
+
+.blackCounter div {
+  background: #1f1525;
+  border: 3px solid black;
+}
+
+.numberList {
+  position: absolute;
+  top: 0;
+  left: -23px;
+  height: 500px;
+  width: 20px;
+}
+
+.numberList .mark {
+  height: 12.5%;
+  line-height: 62.5px;
+}
+
+.letterList {
+  display: flex;
+  position: absolute;
+  top: 102%;
+  left: 0;
+  width: 500px;
+}
+
+.letterList .mark {
+  width: 12.5%;
+  text-align: center;
+}
+
+@media only screen and (max-width: 600px) {
+  #playField {
+    width: 300px;
+    height: 300px;
+    background: red;
+  }
+  .numberList {
+    height: 300px;
+  }
+  .numberList .mark {
+    line-height: 37.5px;
+  }
+  .letterList {
+    width: 300px;
+  }
+  .counter div {
+    margin: 7px auto;
+  }
+}
