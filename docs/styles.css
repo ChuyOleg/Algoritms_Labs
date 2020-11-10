@@ -104,11 +104,13 @@ ul {
 .whiteCounter {
   background: #efe5e5;
   border: 3px solid white;
+  transition: all 0.5s ease 0s;
 }
 
 .blackCounter {
   background: #1f1525;
   border: 3px solid black;
+  transition: all 0.5s ease 0s;
 }
 
 .numberList {
