@@ -42,6 +42,7 @@ const captureOponentCounters = (type, rowNum, start, end, userNum) => {
     }
   } else if (type === 'vertical') {
     for (start; start < end; start++) {
+      console.log(start);
       const index = 8 * start + rowNum;
       const li = counters[index];
       const div = li.querySelector('div');
@@ -61,32 +62,43 @@ const captureOponentCounters = (type, rowNum, start, end, userNum) => {
 }
 
 const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
+  if (playfield[possibleRow][possibleCol] != 0) return false;
+  let mainCondition = false;
+
   for (let row = 0; row < playfield.length; row++) {
-    column:for (let col = 0; col < playfield.length; col++) {
+    for (let col = 0; col < playfield.length; col++) {
+      
       if (row === possibleRow && playfield[row][col] === userNum) {
-      	const activeRow = playfield[row];
-      	let start = null;
-        let end = null;
-      	if (col === possibleCol) continue;
-      	if (col > possibleCol) {
-      		start = possibleCol + 1;
-      	  end = col;
-      	} else {
-      		start = col + 1;
-      		end = possibleCol;
+        const activeRow = playfield[row];
+        let start = (col > possibleCol) ? possibleCol + 1 : col + 1;
+        let end = (col > possibleCol) ? col : possibleCol;
+        let canCapture = true;
+        for (let index = start; index < end; index++) {
+          if ([0, userNum].includes(activeRow[index])) canCapture = false;
+          if (canCapture && index === end - 1) { 
+            captureOponentCounters('horizont', row, start, end, userNum);
+            mainCondition = true;
+          }
         }
-        if (start === end) continue;
-       	for (let index = start; index < end; index++) {
-      	  if (activeRow[index] === 0 || activeRow[index] === userNum) continue column;
-      	}
-        captureOponentCounters('horizont', row, start, end, userNum);
-        return true;
       }
-      const activeColumn = [];
-      for (let num = 0; num < 8; num++) {
-        activeColumn.push(playfield[possibleCol][num]);
+
+      if (col === possibleCol && playfield[row][col] === userNum) {
+        const activeCol = [];
+        for (let num = 0; num < playfield.length; num++) {
+          activeCol.push(playfield[num][col]);
+        }
+        let start = (row > possibleRow) ? possibleRow + 1 : row + 1;
+        let end = (row > possibleRow) ? row : possibleRow;
+        let canCapture = true;
+        for (let index = start; index < end; index++) {
+          if ([0, userNum].includes(activeCol[index])) canCapture = false;
+          if (canCapture && index === end - 1) {
+            captureOponentCounters('vertical', col, start, end, userNum);
+            mainCondition = true;
+          }
+        }
       }
-      if (row === possibleCol && playfield[col][row] === userNum) {
+      /*if (row === possibleCol && playfield[col][row] === userNum) {
         let start = null;
         let end = null;
         console.log(possibleCol);
@@ -111,9 +123,10 @@ const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
           captureOponentCounters('vertical', row, start, end, userNum);
           return true;
         }
-      }
+      }*/
     }
   }
+  return mainCondition;
 }
 
 // remake 'if' conditions in functions
