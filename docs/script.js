@@ -42,7 +42,6 @@ const captureOponentCounters = (type, rowNum, start, end, userNum) => {
     }
   } else if (type === 'vertical') {
     for (start; start < end; start++) {
-      console.log(start);
       const index = 8 * start + rowNum;
       const li = counters[index];
       const div = li.querySelector('div');
@@ -98,32 +97,27 @@ const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
           }
         }
       }
-      /*if (row === possibleCol && playfield[col][row] === userNum) {
-        let start = null;
-        let end = null;
-        console.log(possibleCol);
-        console.log(possibleRow);
-        console.log(col);
-        console.log(row);
-        if (col === possibleRow) console.log('HRE');
-        if (col > possibleRow) {
-          start = possibleRow + 1;
-          end = col;
-        } else {
-          start = col + 1;
-          end = possibleRow;
-        }
-        console.log(start);
-        console.log(end);
-        if (start != end) {
-          console.log('Here');
-          for (let index = start; index < end; index++) {
-            if (activeColumn[index] === 0 || activeColumn[index] === userNum) continue column;
+
+      if (Math.abs(row - possibleRow) === Math.abs(col - possibleCol) && playfield[row][col] === userNum) {     
+        const rowDiff = row - possibleRow;
+        const colDiff = col - possibleCol;
+        let activeLine = [];
+        let activeLineLength = null;
+        if (rowDiff > 0 && colDiff > 0 || rowDiff < 0 && colDiff < 0) {
+          activeLineLength = playfield.length - Math.abs(row - col);
+          let startPoint =  (col - row >= 0) ? 0 : row - col;
+          for (let index = startPoint; index < startPoint + activeLineLength; index++) {
+            console.log(index);
+            activeLine.push(playfield[index][index + 1]);
           }
-          captureOponentCounters('vertical', row, start, end, userNum);
-          return true;
+        } else {
+          activeLineLength = playfield.length - Math.abs(row - (7 - col));
+          for (let index = 0; index < activeLineLength; index++) {
+            //activeLine.push(playfield[][]);
+          }
         }
-      }*/
+          console.log(activeLine);
+      }
     }
   }
   return mainCondition;
@@ -131,7 +125,6 @@ const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
 
 // remake 'if' conditions in functions
 // refactor functions 
-// think about 'continue'
 
 counters.forEach(counter => {
   const div = counter.querySelector('div');
