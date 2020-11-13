@@ -22,7 +22,7 @@ const createPlayfield = (size) => {
 
 const playfield = createPlayfield(8);
 
-const captureOponentCounters = (type, rowNum, start, end, userNum) => {
+const captureOponentCounters = (type, rowNum, start, end, userNum, sign) => {
   if (type === 'horizont') {
     for (start; start < end; start++) {
       const index = 8 * rowNum + start;
@@ -57,6 +57,27 @@ const captureOponentCounters = (type, rowNum, start, end, userNum) => {
         quantityBlackCounters.innerText--;  
       }
     }
+  } else if (type = 'diagonal') {
+      if (sign === 'plus') rowNum = rownum + end - start;
+      else rownum = rownum - end - start;
+      for (start; start < end; start++) {
+        const index = 8 * start + rowNum;
+        const li = counters[index];
+        const div = li.querySelector('div');
+        console.log(index);
+        if (userNum === 1) {
+          div.className = 'blackCounter';
+          playfield[start][rowNum] = 1;
+          quantityBlackCounters.innerText++;
+          quantityWhiteCounters.innerText--;
+        }
+        else {
+          div.className = 'whiteCounter';
+          playfield[start][rowNum] = 2;
+          quantityWhiteCounters.innerText++;
+          quantityBlackCounters.innerText--;
+        }
+      }
   }
 }
 
@@ -106,11 +127,22 @@ const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
         let startPosition = (row > possibleRow) ? possibleRow + 1 : row + 1;
         let endPosition = (row > possibleRow) ? row : possibleRow;
         let canCapture = true;
-        if (rowDiff > 0 && colDiff > 0 || rowDiff < 0 && colDiff < 0) {
+
+/* CHANGE const SIGN, think about capture diagonal counters*/
+
+        const sign = 'true';
+        if (rowDiff >= 0 && colDiff >= 0 || rowDiff <= 0 && colDiff <= 0) {
           activeLineLength = playfield.length - Math.abs(row - col);
           let startPoint =  (col - row >= 0) ? 0 : row - col;
           for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
             activeLine.push(playfield[startRow][col - (row - startRow)]);
+          }
+          for (let index = startPosition; index < endPosition; index++) {
+            if ([0, userNum].includes(activeLine[index - startPoint])) canCapture = false;
+            if (canCapture && index === endPosition - 1) {
+              captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, sign);
+              mainCondition = true;
+            }
           }
         } else {
           const newCol = playfield.length - 1 - col;
@@ -119,7 +151,13 @@ const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
           for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
             activeLine.push(playfield[startRow][7 - (newCol - (row - startRow))]);
           }
-          if ([0, userNum].includes(act))
+          for (let index = startPosition; index < endPosition; index++) {
+            if ([0, userNum].includes(activeLine[index - startPoint])) canCapture = false;
+            if (canCapture && index === endPosition - 1) {
+              captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, sign);
+              mainCondition = true;
+            }
+          }
         }
 
       }
@@ -155,4 +193,4 @@ counters.forEach(counter => {
   });
 })
 
-// ГЛЯНУТИ СКРІН З ПОМИЛКОЮ
+// Create new const for div instead of li.querySelector('div');
