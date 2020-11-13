@@ -103,20 +103,25 @@ const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
         const colDiff = col - possibleCol;
         let activeLine = [];
         let activeLineLength = null;
+        let startPosition = (row > possibleRow) ? possibleRow + 1 : row + 1;
+        let endPosition = (row > possibleRow) ? row : possibleRow;
+        let canCapture = true;
         if (rowDiff > 0 && colDiff > 0 || rowDiff < 0 && colDiff < 0) {
           activeLineLength = playfield.length - Math.abs(row - col);
           let startPoint =  (col - row >= 0) ? 0 : row - col;
-          for (let index = startPoint; index < startPoint + activeLineLength; index++) {
-            console.log(index);
-            activeLine.push(playfield[index][index + 1]);
+          for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
+            activeLine.push(playfield[startRow][col - (row - startRow)]);
           }
         } else {
-          activeLineLength = playfield.length - Math.abs(row - (7 - col));
-          for (let index = 0; index < activeLineLength; index++) {
-            //activeLine.push(playfield[][]);
+          const newCol = playfield.length - 1 - col;
+          activeLineLength = playfield.length - Math.abs(row - newCol);
+          let startPoint = (newCol - row >= 0) ? 0 : row - newCol;
+          for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
+            activeLine.push(playfield[startRow][7 - (newCol - (row - startRow))]);
           }
+          if ([0, userNum].includes(act))
         }
-          console.log(activeLine);
+
       }
     }
   }
