@@ -1,6 +1,9 @@
 const counters = document.querySelectorAll('.counter');
+const countersDiv = document.querySelectorAll('.counter div');
 const quantityWhiteCounters = document.querySelector('.qWhite span');
 const quantityBlackCounters = document.querySelector('.qBlack span');
+const counterColor = { 1: 'blackCounter', 2: 'whiteCounter' };
+const quantityCounters = { 1: quantityBlackCounters, 2: quantityWhiteCounters }
 let userNum = 1;
 
 const createPlayfield = (size) => {  
@@ -23,47 +26,31 @@ const createPlayfield = (size) => {
 const playfield = createPlayfield(8);
 
 const captureOponentCounters = (type, rowNum, start, end, userNum, startSign, diff, stepSign) => {
-  if (type === 'horizontal') {
+  if (type === 'horizontal' || type === 'vertical') {
     for (start; start < end; start++) {
-      const index = 8 * rowNum + start;
-      const li = counters[index];
-      const div = li.querySelector('div');
+      const index = (type === 'horizontal') ? (8 * rowNum + start) : (8 * start + rowNum);
+      const div = countersDiv[index];
       if (userNum === 1) {
-        div.className = 'blackCounter';
-        playfield[rowNum][start] = 1;
-        quantityBlackCounters.innerText++;
-        quantityWhiteCounters.innerText--;
+        div.className = counterColor[userNum];
+        if (type === 'horizontal') playfield[rowNum][start] = userNum;
+        else playfield[start][rowNum] = userNum;
+        quantityCounters[userNum].innerText++;
+        quantityCounters[userNum + 1].innerText--;
       } else {
-        div.className = 'whiteCounter';
-        playfield[rowNum][start] = 2;
-        quantityWhiteCounters.innerText++;
-        quantityBlackCounters.innerText--;  
+        div.className = counterColor[userNum];
+        if (type === 'horizontal') playfield[rowNum][start] = userNum;
+        else playfield[start][rowNum] = userNum;
+        quantityCounters[userNum].innerText++;
+        quantityCounters[userNum - 1].innerText--;
       }
     }
-  } else if (type === 'vertical') {
-    for (start; start < end; start++) {
-      const index = 8 * start + rowNum;
-      const li = counters[index];
-      const div = li.querySelector('div');
-      if (userNum === 1) {
-        div.className = 'blackCounter';
-        playfield[start][rowNum] = 1;
-        quantityBlackCounters.innerText++;
-        quantityWhiteCounters.innerText--;
-      } else {
-        div.className = 'whiteCounter';
-        playfield[start][rowNum] = 2;
-        quantityWhiteCounters.innerText++;
-        quantityBlackCounters.innerText--;  
-      }
-    }
+
   } else if (type = 'diagonal') {
       if (startSign === 'plus') rowNum = rowNum + diff;
       else rowNum = rowNum - diff;
       for (start; start < end; start++) {
         const index = 8 * start + rowNum;
-        const li = counters[index];
-        const div = li.querySelector('div');
+        const div = countersDiv[index];
         if (userNum === 1) {
           div.className = 'blackCounter';
           playfield[start][rowNum] = 1;
@@ -126,41 +113,28 @@ const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
         const rowDiff = row - possibleRow;
         const colDiff = col - possibleCol;
         let activeLine = [];
-        let activeLineLength = null;
         let startPosition = (row > possibleRow) ? possibleRow + 1 : row + 1;
         let endPosition = (row > possibleRow) ? row : possibleRow;
-        let canCapture = true;
-
-/* CHANGE const SIGN, think about capture diagonal counters*/
 
         const diffNum = (row > possibleRow) ? endPosition - startPosition : 1;
+        const conditionForDiagonal = (rowDiff >= 0 && colDiff >= 0 || rowDiff <= 0 && colDiff <= 0);
         const startSign = (possibleCol > col) ? 'plus' : 'minus';
-        if (rowDiff >= 0 && colDiff >= 0 || rowDiff <= 0 && colDiff <= 0) {
-          activeLineLength = playfield.length - Math.abs(row - col);
-          let startPoint =  (col - row >= 0) ? 0 : row - col;
-          for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
-            activeLine.push(playfield[startRow][col - (row - startRow)]);
-          }
-          for (let index = startPosition; index < endPosition; index++) {
-            if ([0, userNum].includes(activeLine[index - startPoint])) canCapture = false;
-            if (canCapture && index === endPosition - 1) {
-              captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, startSign, diffNum, 'plus');
-              mainCondition = true;
-            }
-          }
-        } else {
-          const newCol = playfield.length - 1 - col;
-          activeLineLength = playfield.length - Math.abs(row - newCol);
-          let startPoint = (newCol - row >= 0) ? 0 : row - newCol;
-          for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
-            activeLine.push(playfield[startRow][7 - (newCol - (row - startRow))]);
-          }
-          for (let index = startPosition; index < endPosition; index++) {
-            if ([0, userNum].includes(activeLine[index - startPoint])) canCapture = false;
-            if (canCapture && index === endPosition - 1) {
-              captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, startSign, diffNum, 'minus');
-              mainCondition = true;
-            }
+        const stepSign = (conditionForDiagonal) ? 'plus' : 'minus';
+        const newSpecialCol = (conditionForDiagonal) ? col : playfield.length - 1 - col;
+        const activeLineLength = playfield.length - Math.abs(row - newSpecialCol);
+        const startPoint = (newSpecialCol - row >= 0) ? 0 : row - newSpecialCol;         
+        for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
+          if (conditionForDiagonal) activeLine.push(playfield[startRow][col - (row - startRow)]);
+          else activeLine.push(playfield[startRow][col + row - startRow]);
+        }
+
+        let canCapture = true;
+
+        for (let index = startPosition; index < endPosition; index++) {
+          if ([0, userNum].includes(activeLine[index - startPoint])) canCapture = false;
+          if (canCapture && index === endPosition - 1) {
+            captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, startSign, diffNum, stepSign);
+            mainCondition = true;
           }
         }
 
@@ -195,6 +169,4 @@ counters.forEach(counter => {
 	    }
     }
   });
-})
-
-// Create new const for div instead of li.querySelector('div');
+});
