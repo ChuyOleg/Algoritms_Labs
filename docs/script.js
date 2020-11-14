@@ -92,59 +92,62 @@ const checkHorizontalVerticalLines = (checkType, row, col, clickRow, clickCol, u
     }
 }
 
-const checkPossibleMovements = (possibleRow, possibleCol, userNum) => {
-  if (playfield[possibleRow][possibleCol] != 0) return false;
+const checkDiagonalLines = (row, col, clickRow, clickCol, userNum) => {
+  const rowDiff = row - clickRow;
+  const colDiff = col - clickCol;
+
+  const conditionForDiagonal = (rowDiff >= 0 && colDiff >= 0 || rowDiff <= 0 && colDiff <= 0);
+  const newSpecialCol = (conditionForDiagonal) ? col : playfield.length - 1 - col;
+  const startPoint = (newSpecialCol - row >= 0) ? 0 : row - newSpecialCol;         
+  let activeLine = [];
+  const activeLineLength = playfield.length - Math.abs(row - newSpecialCol);
+  for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
+    if (conditionForDiagonal) activeLine.push(playfield[startRow][col - (row - startRow)]);
+    else activeLine.push(playfield[startRow][col + row - startRow]);
+  }
+
+  let startPosition = (row > clickRow) ? clickRow + 1 : row + 1;
+  let endPosition = (row > clickRow) ? row : clickRow;
+  const startSign = (clickCol > col) ? 'plus' : 'minus';
+  const stepSign = (conditionForDiagonal) ? 'plus' : 'minus';
+  const signDiff = (row > clickRow) ? endPosition - startPosition : 1;
+  let canCapture = true;
+
+  for (let index = startPosition; index < endPosition; index++) {
+    if ([0, userNum].includes(activeLine[index - startPoint])) canCapture = false;
+    if (canCapture && index === endPosition - 1) {
+      captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, startSign, signDiff, stepSign);
+      return 'canCapture';
+    }
+  }
+}
+
+const checkPossibleMovements = (clickRow, clickCol, userNum) => {
+  if (playfield[clickRow][clickCol] != 0) return false;
   let mainCondition = false;
 
   for (let row = 0; row < playfield.length; row++) {
     for (let col = 0; col < playfield.length; col++) {
       
-      if (row === possibleRow && playfield[row][col] === userNum) {
-        const result = checkHorizontalVerticalLines('horizontal', row, col, possibleRow, possibleCol, userNum);
+      if (row === clickRow && playfield[row][col] === userNum) {
+        const result = checkHorizontalVerticalLines('horizontal', row, col, clickRow, clickCol, userNum);
         if (result === 'canCapture') mainCondition = true;
       }
 
-      if (col === possibleCol && playfield[row][col] === userNum) {
-        const result = checkHorizontalVerticalLines('vertical', col, row, possibleCol, possibleRow, userNum);
+      if (col === clickCol && playfield[row][col] === userNum) {
+        const result = checkHorizontalVerticalLines('vertical', col, row, clickCol, clickRow, userNum);
         if (result === 'canCapture') mainCondition = true;
       }
 
-      if (Math.abs(row - possibleRow) === Math.abs(col - possibleCol) && playfield[row][col] === userNum) {     
-        const rowDiff = row - possibleRow;
-        const colDiff = col - possibleCol;
-        let activeLine = [];
-        let startPosition = (row > possibleRow) ? possibleRow + 1 : row + 1;
-        let endPosition = (row > possibleRow) ? row : possibleRow;
-
-        const diffNum = (row > possibleRow) ? endPosition - startPosition : 1;
-        const conditionForDiagonal = (rowDiff >= 0 && colDiff >= 0 || rowDiff <= 0 && colDiff <= 0);
-        const startSign = (possibleCol > col) ? 'plus' : 'minus';
-        const stepSign = (conditionForDiagonal) ? 'plus' : 'minus';
-        const newSpecialCol = (conditionForDiagonal) ? col : playfield.length - 1 - col;
-        const activeLineLength = playfield.length - Math.abs(row - newSpecialCol);
-        const startPoint = (newSpecialCol - row >= 0) ? 0 : row - newSpecialCol;         
-        for (let startRow = startPoint; startRow < startPoint + activeLineLength; startRow++) {
-          if (conditionForDiagonal) activeLine.push(playfield[startRow][col - (row - startRow)]);
-          else activeLine.push(playfield[startRow][col + row - startRow]);
-        }
-
-        let canCapture = true;
-
-        for (let index = startPosition; index < endPosition; index++) {
-          if ([0, userNum].includes(activeLine[index - startPoint])) canCapture = false;
-          if (canCapture && index === endPosition - 1) {
-            captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, startSign, diffNum, stepSign);
-            mainCondition = true;
-          }
-        }
-
+      if (Math.abs(row - clickRow) === Math.abs(col - clickCol) && playfield[row][col] === userNum) {     
+        const result = checkDiagonalLines(row, col, clickRow, clickCol, userNum);
+        if (result === 'canCapture') mainCondition = true;
       }
     }
   }
   return mainCondition;
 }
 
-// remake 'if' conditions in functions
 // refactor functions 
 
 counters.forEach(counter => {
@@ -153,7 +156,7 @@ counters.forEach(counter => {
   const columnNum = Number.parseInt(div.id.slice(2), 10);
   counter.addEventListener('click', () => {
     const conditionMove = checkPossibleMovements(rowNum, columnNum, userNum);
-    if (div.className === '' && conditionMove) {
+    if (conditionMove) {
 	    if (userNum === 1) {
 	      div.className = 'blackCounter';
 	      playfield[rowNum][columnNum] = 1;
@@ -167,6 +170,14 @@ counters.forEach(counter => {
 	      // captureOponentCounters(userNum);
 	      userNum = 1;
 	    }
+      const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
+      const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
+      console.log(blackQuantity + whiteQuantity);
+      if (blackQuantity + whiteQuantity === 40) {
+        if (blackQuantity > whiteQuantity) alert('You win');
+        else if (blackQuantity < whiteQuantity) alert ('You lose');
+          else alert('Draw');
+      }
     }
   });
 });
