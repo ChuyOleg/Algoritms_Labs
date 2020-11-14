@@ -4,6 +4,7 @@ const quantityWhiteCounters = document.querySelector('.qWhite span');
 const quantityBlackCounters = document.querySelector('.qBlack span');
 const counterColor = { 1: 'blackCounter', 2: 'whiteCounter' };
 const quantityCounters = { 1: quantityBlackCounters, 2: quantityWhiteCounters }
+
 let userNum = 1;
 
 const createPlayfield = (size) => {  
@@ -25,24 +26,29 @@ const createPlayfield = (size) => {
 
 const playfield = createPlayfield(8);
 
+const captureCounter = (div, row, col, userNum) => {
+  if (userNum === 1) {
+    div.className = counterColor[userNum];
+    playfield[row][col] = userNum;
+    quantityCounters[userNum].innerText++;
+    quantityCounters[userNum + 1].innerText--;
+  } else {
+    div.className = counterColor[userNum];
+    playfield[row][col] = userNum;
+    quantityCounters[userNum].innerText++;
+    quantityCounters[userNum - 1].innerText--;
+  }
+}
+
 const captureOponentCounters = (type, rowNum, start, end, userNum, startSign, diff, stepSign) => {
   if (type === 'horizontal' || type === 'vertical') {
     for (start; start < end; start++) {
       const index = (type === 'horizontal') ? (8 * rowNum + start) : (8 * start + rowNum);
       const div = countersDiv[index];
-      if (userNum === 1) {
-        div.className = counterColor[userNum];
-        if (type === 'horizontal') playfield[rowNum][start] = userNum;
-        else playfield[start][rowNum] = userNum;
-        quantityCounters[userNum].innerText++;
-        quantityCounters[userNum + 1].innerText--;
-      } else {
-        div.className = counterColor[userNum];
-        if (type === 'horizontal') playfield[rowNum][start] = userNum;
-        else playfield[start][rowNum] = userNum;
-        quantityCounters[userNum].innerText++;
-        quantityCounters[userNum - 1].innerText--;
-      }
+      
+      if (type === 'horizontal') captureCounter(div, rowNum, start, userNum);
+      else if (type === 'vertical') captureCounter(div, start, rowNum, userNum);
+
     }
 
   } else if (type = 'diagonal') {
@@ -51,29 +57,20 @@ const captureOponentCounters = (type, rowNum, start, end, userNum, startSign, di
       for (start; start < end; start++) {
         const index = 8 * start + rowNum;
         const div = countersDiv[index];
-        if (userNum === 1) {
-          div.className = 'blackCounter';
-          playfield[start][rowNum] = 1;
-          quantityBlackCounters.innerText++;
-          quantityWhiteCounters.innerText--;
-        }
-        else {
-          div.className = 'whiteCounter';
-          playfield[start][rowNum] = 2;
-          quantityWhiteCounters.innerText++;
-          quantityBlackCounters.innerText--;
-        }
-      if (stepSign === 'plus') rowNum++;
-      else rowNum--;
+        
+        captureCounter(div, start, rowNum, userNum);
+
+        if (stepSign === 'plus') rowNum++;
+        else rowNum--;
       }
   }
 }
 
-const checkHorizontalVerticalLines = (checkType, row, col, clickRow, clickCol, userNum) => {
+const checkHorizontalVerticalLines = (checkType, row, col, clickRow, clickCol, userNum, reason) => {
     let activeLine = [];
     
     if (checkType === 'horizontal') activeLine = playfield[row];
-    else {
+    if (checkType === 'vertical') {
       for (let num = 0; num < playfield.length; num++) {
         activeLine.push(playfield[num][row]);
       }
@@ -86,13 +83,13 @@ const checkHorizontalVerticalLines = (checkType, row, col, clickRow, clickCol, u
     for (let index = startPosition; index < endPosition; index++) {
       if ([0, userNum].includes(activeLine[index])) canCapture = false;
       if (canCapture && index === endPosition - 1) {
-        captureOponentCounters(checkType, row, startPosition, endPosition, userNum);
+        if (reason != 'onlyCheck')captureOponentCounters(checkType, row, startPosition, endPosition, userNum);
         return 'canCapture';
       }
     }
 }
 
-const checkDiagonalLines = (row, col, clickRow, clickCol, userNum) => {
+const checkDiagonalLines = (row, col, clickRow, clickCol, userNum, reason) => {
   const rowDiff = row - clickRow;
   const colDiff = col - clickCol;
 
@@ -116,13 +113,13 @@ const checkDiagonalLines = (row, col, clickRow, clickCol, userNum) => {
   for (let index = startPosition; index < endPosition; index++) {
     if ([0, userNum].includes(activeLine[index - startPoint])) canCapture = false;
     if (canCapture && index === endPosition - 1) {
-      captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, startSign, signDiff, stepSign);
+      if (reason != 'onlyCheck') captureOponentCounters('diagonal', col, startPosition, endPosition, userNum, startSign, signDiff, stepSign);
       return 'canCapture';
     }
   }
 }
 
-const checkPossibleMovements = (clickRow, clickCol, userNum) => {
+const checkPossibleMovements = (clickRow, clickCol, userNum, reason) => {
   if (playfield[clickRow][clickCol] != 0) return false;
   let mainCondition = false;
 
@@ -130,17 +127,17 @@ const checkPossibleMovements = (clickRow, clickCol, userNum) => {
     for (let col = 0; col < playfield.length; col++) {
       
       if (row === clickRow && playfield[row][col] === userNum) {
-        const result = checkHorizontalVerticalLines('horizontal', row, col, clickRow, clickCol, userNum);
+        const result = checkHorizontalVerticalLines('horizontal', row, col, clickRow, clickCol, userNum, reason);
         if (result === 'canCapture') mainCondition = true;
       }
 
       if (col === clickCol && playfield[row][col] === userNum) {
-        const result = checkHorizontalVerticalLines('vertical', col, row, clickCol, clickRow, userNum);
+        const result = checkHorizontalVerticalLines('vertical', col, row, clickCol, clickRow, userNum, reason);
         if (result === 'canCapture') mainCondition = true;
       }
 
       if (Math.abs(row - clickRow) === Math.abs(col - clickCol) && playfield[row][col] === userNum) {     
-        const result = checkDiagonalLines(row, col, clickRow, clickCol, userNum);
+        const result = checkDiagonalLines(row, col, clickRow, clickCol, userNum, reason);
         if (result === 'canCapture') mainCondition = true;
       }
     }
@@ -148,13 +145,45 @@ const checkPossibleMovements = (clickRow, clickCol, userNum) => {
   return mainCondition;
 }
 
-// refactor functions 
+const checkPosibilityMove = () => {
+  for (let row = 0; row < playfield.length; row++) {
+    for (let col = 0; col < playfield.length; col++) {
+      if (playfield[row][col] === 0) {
+        const conditionMove = checkPossibleMovements(row, col, userNum, 'onlyCheck');
+        if (conditionMove) return true;
+      }
+    }
+  }
+  return false;
+}
+
+const computerMove = () => {
+  for (let row = 0; row < playfield.length; row++) {
+    for (let col = 0; col < playfield.length; col++) {
+      if (playfield[row][col] === 0) {
+        const conditionMove = checkPossibleMovements(row, col, userNum);
+        if (conditionMove) {
+          const div = countersDiv[8 * row + col];
+          div.className = counterColor[userNum];
+          playfield[row][col] = 2;
+          quantityWhiteCounters.innerText++;
+          userNum = 1;
+          return;
+        }
+      }
+    }
+  }
+}
 
 counters.forEach(counter => {
   const div = counter.querySelector('div');
   const rowNum = Number.parseInt(div.id.slice(0, 1), 10);
   const columnNum = Number.parseInt(div.id.slice(2), 10);
   counter.addEventListener('click', () => {
+    if (userNum === 2) return;
+
+    console.log(checkPosibilityMove());
+    
     const conditionMove = checkPossibleMovements(rowNum, columnNum, userNum);
     if (conditionMove) {
 	    if (userNum === 1) {
@@ -163,17 +192,18 @@ counters.forEach(counter => {
 	      quantityBlackCounters.innerText++;
         //captureOponentCounters(userNum);
 	      userNum = 2;
-	    } else {
+        setTimeout(computerMove, 1000);
+	    /*} else {
 	      div.className = 'whiteCounter';
 	      playfield[rowNum][columnNum] = 2;
 	      quantityWhiteCounters.innerText++;
 	      // captureOponentCounters(userNum);
-	      userNum = 1;
+	      userNum = 1;*/
 	    }
       const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
       const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
       console.log(blackQuantity + whiteQuantity);
-      if (blackQuantity + whiteQuantity === 40) {
+      if (blackQuantity + whiteQuantity === 41) {
         if (blackQuantity > whiteQuantity) alert('You win');
         else if (blackQuantity < whiteQuantity) alert ('You lose');
           else alert('Draw');
@@ -181,3 +211,5 @@ counters.forEach(counter => {
     }
   });
 });
+
+
