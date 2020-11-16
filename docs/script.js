@@ -172,19 +172,24 @@ const findNodeValue = (userNum, row, col) => {
   const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
   const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
   const diff = whiteQuantity - blackQuantity;
-  const minMaxValues = { 'min_max': [diff, row, col]};
+  const minMaxValues =  [diff];
   return minMaxValues;
 }
 
-const computerMove = (reason, testPlayfield, deep, maxDeep, userNum, blackNum, whiteNum, min_maxValues) => {
-  if (deep === maxDeep) return;
-  let tempUserNum = userNum;
+const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum, whiteNum, min_maxValues) => {
+  //if (deep === maxDeep) return;
+  //let tempUserNum = userNum;
+  //console.log(deep);
+  //if (deep != maxDeep - 1) min_maxValues[deep] = [];
+  const tempValues = [];
   for (let row = 0; row < playfield.length; row++) {
     for (let col = 0; col < playfield.length; col++) {
-        if (deep === 0) testPlayfield = createCopyArrayWithoutLink(playfield)
+
+        testPlayfield = createCopyArrayWithoutLink(activePlayfield);
         quantityCounters[1].innerText = blackNum;
         quantityCounters[2].innerText = whiteNum; 
-        tempUserNum = userNum;
+        let tempUserNum = userNum;
+
         const conditionMove = checkPossibleMovements(testPlayfield, row, col, tempUserNum, reason);
         if (conditionMove) {
           const div = countersDiv[8 * row + col]; 
@@ -195,11 +200,30 @@ const computerMove = (reason, testPlayfield, deep, maxDeep, userNum, blackNum, w
             deep++;
             const blackNum = quantityCounters[1].innerText;
             const whiteNum = quantityCounters[2].innerText;
-            computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, min_maxValues);
-            console.log('MOVE');
+            let result = null;
+            if (deep != maxDeep) result = computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, min_maxValues);
+            //if (result != null) console.log(result);
+
             const newMinMaxValues = findNodeValue(tempUserNum, row, col);
-            if (newMinMaxValues['min_max'][0] >= min_maxValues['min_max'][0]) min_maxValues = newMinMaxValues;
+            //console.log(newMinMaxValues['min_max']);
             deep--;
+
+            if (deep === 1) {
+              tempValues.push(result);
+            }
+
+            if (deep === 0) {
+              result.push(row);
+              result.push(col);
+              tempValues.push(result);
+            }
+
+            if (deep === maxDeep - 1) {
+              tempValues.push(newMinMaxValues);
+              //console.log(deep, row, col, blackNum, whiteNum);
+              //console.log(newMinMaxValues[0]);
+              //if (newMinMaxValues[0] >= min_maxValues[deep][0]) min_maxValues[deep] = newMinMaxValues;
+            }
           } else if (tempUserNum === 1) {
             quantityBlackCounters.innerText++;
             testPlayfield[row][col] = tempUserNum;
@@ -207,32 +231,100 @@ const computerMove = (reason, testPlayfield, deep, maxDeep, userNum, blackNum, w
             deep++;
             const blackNum = quantityCounters[1].innerText;
             const whiteNum = quantityCounters[2].innerText;
-            computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, min_maxValues);
-            console.log('MOVE');
+            let result = null;
+            if (deep != maxDeep) result = computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, min_maxValues);
+            //if (result != null) console.log(result, deep);
+
             const newMinMaxValues = findNodeValue(tempUserNum, row, col);
-            if (newMinMaxValues['min_max'][0] <= min_maxValues['min_max'][0]) min_maxValues = newMinMaxValues;
+            //console.log(newMinMaxValues['min_max']);
             deep--;
+
+            if (deep === 0) {
+              tempValues.push(result);
+            }
+
+            if (deep === 1) {
+              tempValues.push(result);
+            }
+
+            if (deep === maxDeep - 1) {
+              tempValues.push(newMinMaxValues);
+              //console.log(deep, row, col, blackNum, whiteNum);
+              //console.log(newMinMaxValues[0]);
+              //if (newMinMaxValues[0] <= min_maxValues[deep][0]) min_maxValues[deep] = newMinMaxValues;
+            }
           }
         }
     }
   }
-  console.log(userNum);
-  console.log('HERE');
-  userNum = (userNum === 1) ? 2 : 1;
-  console.log(min_maxValues);
-  return min_maxValues;
+  
+  if (deep === maxDeep - 1) { 
+    let bestChoice = null;
+    for (let i = 0; i < tempValues.length; i++) {
+      // for white 
+      if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
+        bestChoice = tempValues[i];
+      }
+    }
+    //console.log(bestChoice);
+    return bestChoice;
+    //min_maxValues[deep].push(bestChoice);
+  }
+
+  if (deep === 1) {
+    let bestChoice = null;
+    for (let i = 0; i < tempValues.length; i++) {
+      console.log(tempValues[i])
+      if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
+        bestChoice = tempValues[i];
+      }
+    }
+    return bestChoice;
+  }
+
+  if (deep === 0) {
+    console.log(tempValues);
+    let bestChoice = null;
+    for (let i = 0; i < tempValues.length; i++) {
+      if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
+        bestChoice = tempValues[i];
+      }
+    }
+    return bestChoice;
+  }
+
+/*  if (deep < maxDeep) {
+    for (let ) 
+  }*/
+  //console.log(tempValues);
+  //console.log(min_maxValues);
+  console.log('HERE', deep);
+  //userNum = (tempUserNum === 1) ? 2 : 1;
+  //console.log(min_maxValues);
+  //return min_maxValues;
 }
 
 const mini_max = (level) => {
-  const testPlayfield = playfield;
+  //const testPlayfield = playfield;
   let maxDeep = null;
-  if (level === 'easy') maxDeep = 1;
-
-  // min_maxValues { type: [value, row, col] }
-  const min_maxValues = { 'min_max': [0, 0, 0] };
+  const min_maxValues = [];
+  if (level === 'easy') maxDeep = 3;
+  for (let deep = 0; deep < maxDeep; deep++) {
+  // min_maxValues [ [value, row, col] ]
+    min_maxValues.push([]);
+  }
   const blackNum = quantityCounters[1].innerText
   const whiteNum = quantityCounters[2].innerText;
-  setTimeout(computerMove.bind(null, 'CaptureWithoutColor', testPlayfield, 0, maxDeep, userNum, blackNum, whiteNum, min_maxValues), 1000);
+  const result = computerMove('CaptureWithoutColor', playfield, 0, maxDeep, userNum, blackNum, whiteNum, min_maxValues);
+  console.log('MAIN RESULT =>', result);
+  setTimeout(() => {
+    checkPossibleMovements(playfield, result[1], result[2], userNum);
+    const div = countersDiv[(8 * result[1] + result[2])];
+    div.className = 'whiteCounter';
+    playfield[result[1]][result[2]] = userNum;
+    quantityWhiteCounters.innerText++;
+    userNum = 1;
+  }, 1000);
 }
 
 counters.forEach(counter => {
@@ -240,20 +332,27 @@ counters.forEach(counter => {
   const rowNum = Number.parseInt(div.id.slice(0, 1), 10);
   const columnNum = Number.parseInt(div.id.slice(2), 10);
   counter.addEventListener('click', () => {
-    if (userNum === 2) return;
+    //if (userNum === 2) return;
 
     // move to the right place
     //console.log(checkPosibilityMove());
     
     const conditionMove = checkPossibleMovements(playfield, rowNum, columnNum, userNum);
     if (conditionMove) {
-	      div.className = 'blackCounter';
+	      if (userNum === 1) {
+        div.className = 'blackCounter';
 	      playfield[rowNum][columnNum] = 1;
 	      quantityBlackCounters.innerText++;
         //captureOponentCounters(userNum);
 	      userNum = 2;
         mini_max('easy');
-
+        } else {
+        div.className = 'whiteCounter';
+        playfield[rowNum][columnNum] = userNum;
+        quantityWhiteCounters.innerText++;
+        //captureOponentCounters(userNum);
+        userNum = 1;
+        }
       // remake for computer player
       const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
       const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
