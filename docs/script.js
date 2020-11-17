@@ -172,7 +172,9 @@ const findNodeValue = (userNum, row, col) => {
   const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
   const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
   const diff = whiteQuantity - blackQuantity;
-  const minMaxValues =  [diff];
+  if (blackQuantity == 0) alert('LOSER');
+  if (blackQuantity == 0) console.log('LOSeR', row, col, userNum);
+  const minMaxValues = [diff, whiteQuantity, blackQuantity];
   return minMaxValues;
 }
 
@@ -208,11 +210,13 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
             //console.log(newMinMaxValues['min_max']);
             deep--;
 
-            if (deep === 1) {
+            if (deep === 1 && result != null) {
+              //console.log(findNodeValue(tempUserNum, row, col));
               tempValues.push(result);
+              //console.log(result);
             }
 
-            if (deep === 0) {
+            if (deep === 0 && result != null) {
               result.push(row);
               result.push(col);
               tempValues.push(result);
@@ -239,11 +243,13 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
             //console.log(newMinMaxValues['min_max']);
             deep--;
 
-            if (deep === 0) {
+            if (deep === 0 && result != null) {
+              result.push(row);
+              result.push(col);
               tempValues.push(result);
             }
 
-            if (deep === 1) {
+            if (deep === 1 && result != null) {
               tempValues.push(result);
             }
 
@@ -262,6 +268,8 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
     let bestChoice = null;
     for (let i = 0; i < tempValues.length; i++) {
       // for white 
+      if (tempValues[i] == null) console.log(tempValues);
+      if (tempValues[0] === tempValues[1]) alert('2');
       if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
         bestChoice = tempValues[i];
       }
@@ -274,7 +282,9 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
   if (deep === 1) {
     let bestChoice = null;
     for (let i = 0; i < tempValues.length; i++) {
-      console.log(tempValues[i])
+      //console.log(tempValues[i])
+      if (tempValues[i] == null) console.log(tempValues);
+      if (tempValues[0] === tempValues[1]) alert('2');
       if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
         bestChoice = tempValues[i];
       }
@@ -286,6 +296,7 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
     console.log(tempValues);
     let bestChoice = null;
     for (let i = 0; i < tempValues.length; i++) {
+      if (tempValues[0] === tempValues[1]) alert('2');
       if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
         bestChoice = tempValues[i];
       }
@@ -316,15 +327,20 @@ const mini_max = (level) => {
   const blackNum = quantityCounters[1].innerText
   const whiteNum = quantityCounters[2].innerText;
   const result = computerMove('CaptureWithoutColor', playfield, 0, maxDeep, userNum, blackNum, whiteNum, min_maxValues);
+  if (result === null) {
+    alert('Opponent has no move');
+    userNum = 1;
+    return;
+  }
   console.log('MAIN RESULT =>', result);
   setTimeout(() => {
-    checkPossibleMovements(playfield, result[1], result[2], userNum);
-    const div = countersDiv[(8 * result[1] + result[2])];
+    checkPossibleMovements(playfield, result[3], result[4], userNum);
+    const div = countersDiv[(8 * result[3] + result[4])];
     div.className = 'whiteCounter';
-    playfield[result[1]][result[2]] = userNum;
+    playfield[result[3]][result[4]] = userNum;
     quantityWhiteCounters.innerText++;
     userNum = 1;
-  }, 1000);
+  }, 100);
 }
 
 counters.forEach(counter => {
@@ -339,6 +355,7 @@ counters.forEach(counter => {
     
     const conditionMove = checkPossibleMovements(playfield, rowNum, columnNum, userNum);
     if (conditionMove) {
+      console.clear();
 	      if (userNum === 1) {
         div.className = 'blackCounter';
 	      playfield[rowNum][columnNum] = 1;
