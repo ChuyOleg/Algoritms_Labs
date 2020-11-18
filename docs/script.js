@@ -186,8 +186,6 @@ const checkPosibilityMove = (activeUserNum) => {
 const findNodeValue = (userNum, row, col) => {
   const { blackQuantity, whiteQuantity } = getCountersQuantity();
   const diff = whiteQuantity - blackQuantity;
-  if (blackQuantity == 0) alert('LOSER');
-  if (whiteQuantity == 0) alert('LOSeR');
   const minMaxValues = [diff, whiteQuantity, blackQuantity];
   return minMaxValues;
 }
@@ -228,20 +226,20 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
           if (result != null) tempValues.push(result);
           if (deep === maxDeep - 1) {
             const newMinMaxValues = findNodeValue(tempUserNum, row, col);
+            
+            // для останнього хода
+            if (maxDeep === 1) {
+              newMinMaxValues.push(row);
+              newMinMaxValues.push(col);
+            }
             tempValues.push(newMinMaxValues);
           }
         }
     }
   }
 
-  // change for max and min users
   let bestChoice = null;
-    if (deep === 0) console.log(tempValues);
   for (let i = 0; i < tempValues.length; i++) {
-    if (tempValues[i] === null) console.log('TEMPVALUES[i] = null !');
-    if (tempValues[i][1] == 0) alert('YES');
-    if (tempValues[i][2] == 0) alert('NOT');
-
     if (userNum === 1) {
       if (bestChoice === null || tempValues[i][0] < bestChoice[0]) bestChoice = tempValues[i];
     } else if (userNum === 2) {
@@ -252,25 +250,25 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
 }
 
 const mini_max = (level) => {
+  const { blackQuantity, whiteQuantity } = getCountersQuantity();
+  const allQuantity = blackQuantity + whiteQuantity;
   let maxDeep = null;
   const min_maxValues = [];
   if (level === 'easy') maxDeep = 3;
+  if (64 - allQuantity < maxDeep) maxDeep = 64 - allQuantity;
   for (let deep = 0; deep < maxDeep; deep++) {
     min_maxValues.push([]);
   }
-  const { blackQuantity, whiteQuantity } = getCountersQuantity();
   const result = computerMove('CaptureWithoutColor', playfield, 0, maxDeep, userNum, blackQuantity, whiteQuantity, min_maxValues);
   if (result === null) {
     alert('Opponent has no move');
     userNum = 1;
-    return;
+    return 'DELETE';
   }
-  setTimeout(() => {
-    checkPossibleMovements(playfield, result[3], result[4], userNum);
-    const div = countersDiv[(8 * result[3] + result[4])];
-    setNewCounter(playfield, div, result[3], result[4], userNum);
-    userNum = 1;
-  }, 100);
+  checkPossibleMovements(playfield, result[3], result[4], userNum);
+  const div = countersDiv[(8 * result[3] + result[4])];
+  setNewCounter(playfield, div, result[3], result[4], userNum);
+  userNum = 1;
 };
 
 const checkGameEnd = () => {
@@ -282,32 +280,46 @@ const checkGameEnd = () => {
     else alert('Draw');
     return true;
   }
+  if (checkPosibilityMove(1) === false && checkPosibilityMove(2) === false) {
+    if (blackQuantity > whiteQuantity) alert('You win !');
+    else if (blackQuantity < whiteQuantity) alert('You lose !');
+    else alert('Draw');
+    return true;
+  }
   return false;
 }
 
 counters.forEach(counter => {
   const div = counter.querySelector('div');
   const rowNum = Number.parseInt(div.id.slice(0, 1), 10);
-  const columnNum = Number.parseInt(div.id.slice(2), 10);
+  const colNum = Number.parseInt(div.id.slice(2), 10);
   counter.addEventListener('click', () => {
     
-    const conditionMove = checkPossibleMovements(playfield, rowNum, columnNum, userNum);
+    const conditionMove = checkPossibleMovements(playfield, rowNum, colNum, userNum);
     if (conditionMove) {
       console.clear();
 	    if (userNum === 1) {
-        div.className = 'blackCounter';
-	      playfield[rowNum][columnNum] = 1;
-	      quantityBlackCounters.innerText++;
-	      userNum = 2;
+        //div.className = 'blackCounter';
+	      //playfield[rowNum][colNum] = 1;
+	      //quantityBlackCounters.innerText++;
+	      setNewCounter(playfield, div, rowNum, colNum, userNum);
+        userNum = 2;
         if (checkGameEnd()) {
           return;
         }
         mini_max('easy');
+       
+        if (checkGameEnd()) {
+          return;
+        }
+
         while (checkPosibilityMove(1) === false) {
+          alert('BEFORE');
           if (checkGameEnd()) {
             return;
           }
-          if (checkPosibilityMove(1) === false || checkPosibilityMove(2) === false) {
+
+          if (checkPosibilityMove(1) === false && checkPosibilityMove(2) === false) {
             alert('GAME OVER');
             return;
           }
@@ -320,9 +332,7 @@ counters.forEach(counter => {
   });
 });
 
-// вирішити проблему компа з  останніми трьома (або 5) ходами
 // зробити адекватний checkGameEnd
-// реалізувати мінімакс, бо зара тільки макс
 // порефакторити функції
 // зробити альфа-бета відсіки
-
+// добавити рівні
