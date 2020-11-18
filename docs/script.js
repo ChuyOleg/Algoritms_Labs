@@ -7,8 +7,11 @@ const quantityCounters = { 1: quantityBlackCounters, 2: quantityWhiteCounters }
 
 let userNum = 1;
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+const getCountersQuantity = () => {
+  const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
+  const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
+  const quantity = { blackQuantity, whiteQuantity};
+  return quantity;
 }
 
 const createPlayfield = (size) => {  
@@ -48,6 +51,18 @@ const captureCounter = (activePlayfield, div, row, col, userNum, reason) => {
     quantityCounters[userNum].innerText++;
     quantityCounters[userNum - 1].innerText--;
   }
+}
+
+const setNewCounter = (activePlayfield, div, row, col, userNum, reason) => {
+  if (userNum === 1) {
+    if (reason != 'setWithoutColor') div.className = counterColor[userNum];
+    activePlayfield[row][col] = userNum;
+    quantityCounters[userNum].innerText++;
+  } else {
+    if (reason != 'setWithoutColor') div.className = counterColor[userNum];
+    activePlayfield[row][col] = userNum;
+    quantityCounters[userNum].innerText++;
+  } 
 }
 
 const captureOponentCounters = (type, activePlayfield, rowNum, start, end, userNum, reason, startSign, diff, stepSign) => {
@@ -156,11 +171,11 @@ const checkPossibleMovements = (activePlayfield, clickRow, clickCol, userNum, re
 }
 
 
-const checkPosibilityMove = () => {
+const checkPosibilityMove = (activeUserNum) => {
   for (let row = 0; row < playfield.length; row++) {
     for (let col = 0; col < playfield.length; col++) {
       if (playfield[row][col] === 0) {
-        const conditionMove = checkPossibleMovements(row, col, userNum, 'onlyCheck');
+        const conditionMove = checkPossibleMovements(playfield, row, col, activeUserNum, 'onlyCheck');
         if (conditionMove) return true;
       }
     }
@@ -169,21 +184,17 @@ const checkPosibilityMove = () => {
 }
 
 const findNodeValue = (userNum, row, col) => {
-  const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
-  const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
+  const { blackQuantity, whiteQuantity } = getCountersQuantity();
   const diff = whiteQuantity - blackQuantity;
   if (blackQuantity == 0) alert('LOSER');
-  if (blackQuantity == 0) console.log('LOSeR', row, col, userNum);
+  if (whiteQuantity == 0) alert('LOSeR');
   const minMaxValues = [diff, whiteQuantity, blackQuantity];
   return minMaxValues;
 }
 
 const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum, whiteNum, min_maxValues) => {
-  //if (deep === maxDeep) return;
-  //let tempUserNum = userNum;
-  //console.log(deep);
-  //if (deep != maxDeep - 1) min_maxValues[deep] = [];
   const tempValues = [];
+  
   for (let row = 0; row < playfield.length; row++) {
     for (let col = 0; col < playfield.length; col++) {
 
@@ -194,153 +205,84 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
 
         const conditionMove = checkPossibleMovements(testPlayfield, row, col, tempUserNum, reason);
         if (conditionMove) {
-          const div = countersDiv[8 * row + col]; 
-          if (tempUserNum === 2) { 
-            testPlayfield[row][col] = tempUserNum;
-            quantityWhiteCounters.innerText++;
+          const div = countersDiv[8 * row + col];
+          let result = null; 
+          if (tempUserNum === 2) {
+            setNewCounter(testPlayfield, div, row, col, tempUserNum, 'setWithoutColor');
             tempUserNum = 1;
-            deep++;
-            const blackNum = quantityCounters[1].innerText;
-            const whiteNum = quantityCounters[2].innerText;
-            let result = null;
-            if (deep != maxDeep) result = computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, min_maxValues);
-            //if (result != null) console.log(result);
-
-            const newMinMaxValues = findNodeValue(tempUserNum, row, col);
-            //console.log(newMinMaxValues['min_max']);
-            deep--;
-
-            if (deep === 1 && result != null) {
-              //console.log(findNodeValue(tempUserNum, row, col));
-              tempValues.push(result);
-              //console.log(result);
-            }
-
-            if (deep === 0 && result != null) {
-              result.push(row);
-              result.push(col);
-              tempValues.push(result);
-            }
-
-            if (deep === maxDeep - 1) {
-              tempValues.push(newMinMaxValues);
-              //console.log(deep, row, col, blackNum, whiteNum);
-              //console.log(newMinMaxValues[0]);
-              //if (newMinMaxValues[0] >= min_maxValues[deep][0]) min_maxValues[deep] = newMinMaxValues;
-            }
           } else if (tempUserNum === 1) {
-            quantityBlackCounters.innerText++;
-            testPlayfield[row][col] = tempUserNum;
+            setNewCounter(testPlayfield, div, row, col, tempUserNum, 'setWithoutColor');
             tempUserNum = 2;
-            deep++;
-            const blackNum = quantityCounters[1].innerText;
-            const whiteNum = quantityCounters[2].innerText;
-            let result = null;
-            if (deep != maxDeep) result = computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, min_maxValues);
-            //if (result != null) console.log(result, deep);
+          }
 
+          deep++;
+          const { blackQuantity: blackNum, whiteQuantity: whiteNum } = getCountersQuantity();
+          if (deep != maxDeep) result = computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, min_maxValues);
+          deep--;
+
+          if (deep === 0 && result != null) {
+            result.push(row);
+            result.push(col);
+          }
+
+          if (result != null) tempValues.push(result);
+          if (deep === maxDeep - 1) {
             const newMinMaxValues = findNodeValue(tempUserNum, row, col);
-            //console.log(newMinMaxValues['min_max']);
-            deep--;
-
-            if (deep === 0 && result != null) {
-              result.push(row);
-              result.push(col);
-              tempValues.push(result);
-            }
-
-            if (deep === 1 && result != null) {
-              tempValues.push(result);
-            }
-
-            if (deep === maxDeep - 1) {
-              tempValues.push(newMinMaxValues);
-              //console.log(deep, row, col, blackNum, whiteNum);
-              //console.log(newMinMaxValues[0]);
-              //if (newMinMaxValues[0] <= min_maxValues[deep][0]) min_maxValues[deep] = newMinMaxValues;
-            }
+            tempValues.push(newMinMaxValues);
           }
         }
     }
   }
-  
-  if (deep === maxDeep - 1) { 
-    let bestChoice = null;
-    for (let i = 0; i < tempValues.length; i++) {
-      // for white 
-      if (tempValues[i] == null) console.log(tempValues);
-      if (tempValues[0] === tempValues[1]) alert('2');
-      if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
-        bestChoice = tempValues[i];
-      }
-    }
-    //console.log(bestChoice);
-    return bestChoice;
-    //min_maxValues[deep].push(bestChoice);
-  }
 
-  if (deep === 1) {
-    let bestChoice = null;
-    for (let i = 0; i < tempValues.length; i++) {
-      //console.log(tempValues[i])
-      if (tempValues[i] == null) console.log(tempValues);
-      if (tempValues[0] === tempValues[1]) alert('2');
-      if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
-        bestChoice = tempValues[i];
-      }
-    }
-    return bestChoice;
-  }
+  // change for max and min users
+  let bestChoice = null;
+    if (deep === 0) console.log(tempValues);
+  for (let i = 0; i < tempValues.length; i++) {
+    if (tempValues[i] === null) console.log('TEMPVALUES[i] = null !');
+    if (tempValues[i][1] == 0) alert('YES');
+    if (tempValues[i][2] == 0) alert('NOT');
 
-  if (deep === 0) {
-    console.log(tempValues);
-    let bestChoice = null;
-    for (let i = 0; i < tempValues.length; i++) {
-      if (tempValues[0] === tempValues[1]) alert('2');
-      if (bestChoice == null || tempValues[i][0] > bestChoice[0]) {
-        bestChoice = tempValues[i];
-      }
+    if (userNum === 1) {
+      if (bestChoice === null || tempValues[i][0] < bestChoice[0]) bestChoice = tempValues[i];
+    } else if (userNum === 2) {
+      if (bestChoice === null || tempValues[i][0] > bestChoice[0]) bestChoice = tempValues[i];
     }
-    return bestChoice;
   }
-
-/*  if (deep < maxDeep) {
-    for (let ) 
-  }*/
-  //console.log(tempValues);
-  //console.log(min_maxValues);
-  console.log('HERE', deep);
-  //userNum = (tempUserNum === 1) ? 2 : 1;
-  //console.log(min_maxValues);
-  //return min_maxValues;
+  return bestChoice;
 }
 
 const mini_max = (level) => {
-  //const testPlayfield = playfield;
   let maxDeep = null;
   const min_maxValues = [];
   if (level === 'easy') maxDeep = 3;
   for (let deep = 0; deep < maxDeep; deep++) {
-  // min_maxValues [ [value, row, col] ]
     min_maxValues.push([]);
   }
-  const blackNum = quantityCounters[1].innerText
-  const whiteNum = quantityCounters[2].innerText;
-  const result = computerMove('CaptureWithoutColor', playfield, 0, maxDeep, userNum, blackNum, whiteNum, min_maxValues);
+  const { blackQuantity, whiteQuantity } = getCountersQuantity();
+  const result = computerMove('CaptureWithoutColor', playfield, 0, maxDeep, userNum, blackQuantity, whiteQuantity, min_maxValues);
   if (result === null) {
     alert('Opponent has no move');
     userNum = 1;
     return;
   }
-  console.log('MAIN RESULT =>', result);
   setTimeout(() => {
     checkPossibleMovements(playfield, result[3], result[4], userNum);
     const div = countersDiv[(8 * result[3] + result[4])];
-    div.className = 'whiteCounter';
-    playfield[result[3]][result[4]] = userNum;
-    quantityWhiteCounters.innerText++;
+    setNewCounter(playfield, div, result[3], result[4], userNum);
     userNum = 1;
   }, 100);
+};
+
+const checkGameEnd = () => {
+  const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
+  const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
+  if (blackQuantity + whiteQuantity === 64) {
+    if (blackQuantity > whiteQuantity) alert('You win !');
+    else if (blackQuantity < whiteQuantity) alert('You lose !');
+    else alert('Draw');
+    return true;
+  }
+  return false;
 }
 
 counters.forEach(counter => {
@@ -348,38 +290,39 @@ counters.forEach(counter => {
   const rowNum = Number.parseInt(div.id.slice(0, 1), 10);
   const columnNum = Number.parseInt(div.id.slice(2), 10);
   counter.addEventListener('click', () => {
-    //if (userNum === 2) return;
-
-    // move to the right place
-    //console.log(checkPosibilityMove());
     
     const conditionMove = checkPossibleMovements(playfield, rowNum, columnNum, userNum);
     if (conditionMove) {
       console.clear();
-	      if (userNum === 1) {
+	    if (userNum === 1) {
         div.className = 'blackCounter';
 	      playfield[rowNum][columnNum] = 1;
 	      quantityBlackCounters.innerText++;
-        //captureOponentCounters(userNum);
 	      userNum = 2;
-        mini_max('easy');
-        } else {
-        div.className = 'whiteCounter';
-        playfield[rowNum][columnNum] = userNum;
-        quantityWhiteCounters.innerText++;
-        //captureOponentCounters(userNum);
-        userNum = 1;
+        if (checkGameEnd()) {
+          return;
         }
-      // remake for computer player
-      const blackQuantity = Number.parseInt(quantityCounters[1].innerText, 10);
-      const whiteQuantity = Number.parseInt(quantityCounters[2].innerText, 10);
-      if (whiteQuantity === 0) console.log('You win');
-      if (blackQuantity === 0) console.log('You lose');
-      /*if (blackQuantity + whiteQuantity === ) {
-        if (blackQuantity > whiteQuantity) alert('You win');
-        else if (blackQuantity < whiteQuantity) alert ('You lose');
-          else alert('Draw');
-      }*/
+        mini_max('easy');
+        while (checkPosibilityMove(1) === false) {
+          if (checkGameEnd()) {
+            return;
+          }
+          if (checkPosibilityMove(1) === false || checkPosibilityMove(2) === false) {
+            alert('GAME OVER');
+            return;
+          }
+          userNum = 2;
+          alert('You have no move');
+          mini_max('easy');
+        }
+      }
     }
   });
 });
+
+// вирішити проблему компа з  останніми трьома (або 5) ходами
+// зробити адекватний checkGameEnd
+// реалізувати мінімакс, бо зара тільки макс
+// порефакторити функції
+// зробити альфа-бета відсіки
+
