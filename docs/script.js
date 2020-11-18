@@ -192,10 +192,11 @@ const findNodeValue = (userNum, row, col) => {
 
 const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum, whiteNum, min_maxValues) => {
   const tempValues = [];
+  const activeMinMaxValues = min_maxValues.slice();
   
+  firstLoop:
   for (let row = 0; row < playfield.length; row++) {
     for (let col = 0; col < playfield.length; col++) {
-
         testPlayfield = createCopyArrayWithoutLink(activePlayfield);
         quantityCounters[1].innerText = blackNum;
         quantityCounters[2].innerText = whiteNum; 
@@ -205,6 +206,7 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
         if (conditionMove) {
           const div = countersDiv[8 * row + col];
           let result = null; 
+
           if (tempUserNum === 2) {
             setNewCounter(testPlayfield, div, row, col, tempUserNum, 'setWithoutColor');
             tempUserNum = 1;
@@ -215,25 +217,37 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
 
           deep++;
           const { blackQuantity: blackNum, whiteQuantity: whiteNum } = getCountersQuantity();
-          if (deep != maxDeep) result = computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, min_maxValues);
+          if (deep != maxDeep) result = computerMove('CaptureWithoutColor', testPlayfield, deep, maxDeep, tempUserNum, blackNum, whiteNum, tempValues);
           deep--;
+          
+          if (deep === maxDeep - 1) result = findNodeValue(tempUserNum, row, col);
 
           if (deep === 0 && result != null) {
             result.push(row);
             result.push(col);
           }
 
-          if (result != null) tempValues.push(result);
-          if (deep === maxDeep - 1) {
-            const newMinMaxValues = findNodeValue(tempUserNum, row, col);
-            
-            // для останнього хода
-            if (maxDeep === 1) {
-              newMinMaxValues.push(row);
-              newMinMaxValues.push(col);
-            }
-            tempValues.push(newMinMaxValues);
+          // для останнього хода
+          if (maxDeep === 1) {
+              result.push(row);
+              result.push(col);
           }
+
+          if (result != null) tempValues.push(result);
+          
+          // alpha-beta
+          if (result != null) {
+            for (let indexValue = 0; indexValue < activeMinMaxValues.length; indexValue++) {
+                        // обирає max                   обирає min
+              if (deep % 2 === 0 && result[0] >= activeMinMaxValues[indexValue][0]) {
+                break firstLoop;
+                        // обирає min                   обирає max 
+              } else if (deep % 2 === 1 && result[0] <= activeMinMaxValues[indexValue][0]) {
+                break firstLoop;
+              }
+            }
+          }
+
         }
     }
   }
@@ -246,6 +260,8 @@ const computerMove = (reason, activePlayfield, deep, maxDeep, userNum, blackNum,
       if (bestChoice === null || tempValues[i][0] > bestChoice[0]) bestChoice = tempValues[i];
     }
   }
+  if (deep === 0) console.log(tempValues);
+  //console.log(tempValues, deep);
   return bestChoice;
 }
 
@@ -253,17 +269,15 @@ const mini_max = (level) => {
   const { blackQuantity, whiteQuantity } = getCountersQuantity();
   const allQuantity = blackQuantity + whiteQuantity;
   let maxDeep = null;
-  const min_maxValues = [];
   if (level === 'easy') maxDeep = 3;
   if (64 - allQuantity < maxDeep) maxDeep = 64 - allQuantity;
-  for (let deep = 0; deep < maxDeep; deep++) {
-    min_maxValues.push([]);
-  }
+
+  const min_maxValues = [];
   const result = computerMove('CaptureWithoutColor', playfield, 0, maxDeep, userNum, blackQuantity, whiteQuantity, min_maxValues);
   if (result === null) {
     alert('Opponent has no move');
     userNum = 1;
-    return 'DELETE';
+    return;
   }
   checkPossibleMovements(playfield, result[3], result[4], userNum);
   const div = countersDiv[(8 * result[3] + result[4])];
@@ -299,14 +313,13 @@ counters.forEach(counter => {
     if (conditionMove) {
       console.clear();
 	    if (userNum === 1) {
-        //div.className = 'blackCounter';
-	      //playfield[rowNum][colNum] = 1;
-	      //quantityBlackCounters.innerText++;
 	      setNewCounter(playfield, div, rowNum, colNum, userNum);
         userNum = 2;
+
         if (checkGameEnd()) {
           return;
         }
+
         mini_max('easy');
        
         if (checkGameEnd()) {
@@ -314,25 +327,20 @@ counters.forEach(counter => {
         }
 
         while (checkPosibilityMove(1) === false) {
-          alert('BEFORE');
+
+          alert('You have no move');
+          userNum = 2;
+          mini_max('easy');
+          
           if (checkGameEnd()) {
             return;
           }
 
-          if (checkPosibilityMove(1) === false && checkPosibilityMove(2) === false) {
-            alert('GAME OVER');
-            return;
-          }
-          userNum = 2;
-          alert('You have no move');
-          mini_max('easy');
         }
       }
     }
   });
 });
 
-// зробити адекватний checkGameEnd
-// порефакторити функції
 // зробити альфа-бета відсіки
 // добавити рівні
