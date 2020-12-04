@@ -1,183 +1,136 @@
-html, body {
-  height: 100%;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  background: #FFD6D6;
-  overflow: hidden;
+body {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: #ffe3d1;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-#menu {
-  box-sizing: border-box;
+.gameField {
+  height: 600px;
+  background: #73dd84;
+  border-radius: 15px;
   border: 1px solid black;
-  height: 30%;
-  width: 40%;
-  position: absolute;
-  top: 30%;
-  left: 30%;
-  background: #ADE463;
-  display: block;
 }
 
-.level {
-  border-bottom: 1px solid  black;
-  height: 65px;
-  line-height: 40px;
-  text-align: center;
-}
-
-.level:hover {
-  cursor: pointer;
-  background: #E66868;
-}
-
-.reboot {
-  position: absolute;
-  top: 5%;
-  right: 5%;
-  height: 40px;
-  width: 40px;
-  border-radius: 50%;
-  background-image: url('img/reboot.png');
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
-.reboot:hover {
-  transition: transform 5s linear 0s;
-  transform: rotate(360deg);
-}
-
-#playField {
-  margin: 100px auto;
-  margin-bottom: 0;
-  width: 500px;
-  height: 500px;
-  background: #e7cfa9;
-  border: 3px solid #a54d18;
+.gameTable {
+  background: #9c9dce;
+  height: 485px;
+  border: 3px solid black;
+  padding: 0;
   position: relative;
-  display: none;
+  color: black;
 }
 
-.list {
-  box-sizing: border-box;
-  width: 100%;
-  height: 12.5%;
+.tableRow {
   display: flex;
-  background: #377a41;
 }
 
-.counter {
-  box-sizing: border-box;
-  width: 12.5%;
-  border: 1px solid #a54d18;
+.firstCol {
+  width: 40%;
+  text-align: left !important;
+  padding-left: 30px !important;
 }
 
-.counter div {
-  box-sizing: border-box;
-  margin: 11px auto;
-  height: 65%;
-  width: 65%;
-  border-radius: 50%;
+.secondCol {
+  width: 30%;
 }
 
-.whiteCounter {
-  background: #efe5e5;
-  border: 3px solid white;
-  transition: all 0.5s ease 0s;
+.thirdCol {
+  width: 30%;
 }
 
-.blackCounter {
-  background: #1f1525;
-  border: 3px solid black;
-  transition: all 0.5s ease 0s;
-}
-
-.numberList {
-  position: absolute;
-  top: 0;
-  left: -23px;
-  height: 500px;
-  width: 20px;
-}
-
-.numberList .mark {
-  height: 12.5%;
-  line-height: 62.5px;
-}
-
-.letterList {
-  display: flex;
-  position: absolute;
-  top: 102%;
-  left: 0;
-  width: 500px;
-}
-
-.letterList .mark {
-  width: 12.5%;
+.tableRow div {
+  border: 1px solid black;
+  display: block;
+  height: 40px;
   text-align: center;
+  line-height: 40px;
 }
 
-.quantity {
+.userImage {
+  height: 100px;
+  width: 100px;
+  background: url('img/person.png');
+  background-size: 100px;
+  border: 1px solid black;
+  border-radius: 5px;
   position: absolute;
-  top: -50px;
-  left: 20px;
-  height: 36px;
-  width: 70px; 
+  top: 2%;
+  left: 40%;
+}
+
+.computerImage {
+  height: 100px;
+  width: 100px;
+  background: url('img/computer.png');
+  background-size: 100px;
+  border: 1px solid black;
+  border-radius: 5px;
+  position: absolute;
+  bottom: 2%;
+  left: 40%;
+}
+
+.diceRow {
+  height: 60px;
+  width: 80%;
+  position: absolute;
   display: flex;
+  justify-content: space-around;
+  padding-top: 3px;
 }
 
-.qBlack {
-  left: 300px;
+.diceRow div {
+  height: 50px;
+  width: 50px;
+  border-radius: 5px;
+  background: white;
 }
 
-.quantity div {
+.savedDiceUser {
+  top: 22%;
+  left: 10%;
+}
+
+.activeDiceUser {
+  top: 35%;
+  left: 10%;
+}
+
+.savedDiceComp {
+  bottom: 22%;
+  left: 10%;
+}
+
+.activeDiceComp {
+  bottom: 35%;
+  left: 10%;
+}
+
+.rollDice {
+  width: 100px;
   height: 30px;
-  width: 30px;
-  border-radius: 50%;
-  background: #efe5e5;
-  border: 3px solid white;
+  background: red;
+  text-align: center;
+  line-height: 30px;
+  border-radius: 10px;
+  border: 1px solid black;
+  position: absolute;
+  top: 47%;
+  right: 10%;
+  color: black;
+  font-weight: bold;
 }
 
-.qBlack div {
-  left: 300px;
-  background: #1f1525;
-  border: 3px solid black;
+.rollDice:hover {
+  cursor: pointer;
+  background: #F56565;
 }
 
-.quantity span {
-  margin-left: 10px;
-  line-height: 36px;
-  font-size: 20px;
-}
-
-@media only screen and (max-width: 600px) {
-  #playField {
-    width: 300px;
-    height: 300px;
-    background: red;
-    margin-top: 150px;
-  }
-  .numberList {
-    height: 300px;
-  }
-  .numberList .mark {
-    line-height: 37.5px;
-  }
-  .letterList {
-    width: 300px;
-  }
-  .counter div {
-    margin: 7px auto;
-  }
-  .qBlack {
-    left: 200px;
-  }
+.attemps {
+  width: 100px;
+  height: 30px;
+  position: absolute;
+  top: 47%;
+  left: 10%;
+  font-weight: bold;
 }
