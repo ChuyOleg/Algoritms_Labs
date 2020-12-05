@@ -10,6 +10,11 @@ const userResult = document.querySelector('.playerTotal');
 const computerResult = document.querySelector('.computerTotal');
 let player = 'user';
 
+const pause = ms => {
+  const dt = new Date();
+  while ((new Date()) - dt <= ms) {};
+};
+
 const randomFromTo = (from, to) => Math.floor(from + (Math.random() * (to - from + 1)));
 
 const savedDices = {'0': null, '1': null, '2': null, '3': null, '4': null};
@@ -42,6 +47,15 @@ const countResult = () => {
   resultColumn.innerText = result;
 };
 
+const checkGameEnd = () => {
+  const closedRows = document.querySelectorAll('#close');
+  if (closedRows.length === 20) {
+    const message = (Number.parseInt(userResult.innerText) > Number.parseInt(computerResult.innerText)) ? 'You win!' : 'You lose!';
+    rollDiceButton.style.display = 'none';
+    alert (message);
+  }
+};
+
 const checkNumbers = (numbersArr) => {
   const result = [0, 0, 0, 0, 0, 0];
   numbersArr.forEach(number => {
@@ -62,7 +76,7 @@ const checkStraight = (numbersArr, rollNum) => {
     if (num === 5) result = (rollNum === '3') ? 25 : 20; 
   }
   for (let num = 2; num <= 6; num++) {
-    if (!(numbersArr.includes(num))) break;
+    if (!(numbersArr.includes(`${num}`))) break;
     if (num === 6) result = (rollNum === '3') ? 25 : 20;
   }
   return result;
@@ -125,19 +139,26 @@ const rollDice = () => {
 const save_deleteDice = (dice, index) => {
   const diceIndex = index % 5;
   const diceClass = dice.classList[0];
-
-  if (savedDices[diceIndex] === null && diceClass === 'activeDice') {
-    savedDices[diceIndex] = dice.id;
-    dice.style.background = 'white';
-    const diceImageName = diceNames[savedDices[diceIndex] - 1];
-    const diceNum = (player === 'user') ? index - 5 : index + 5;
-    dices[diceNum].style.background = `url(${diceImageName})`;
-  } else if (savedDices[diceIndex] != null && diceClass === 'savedDice') {
-    const diceImageName = diceNames[savedDices[diceIndex] - 1];
-    savedDices[diceIndex] = null;
-    dice.style.background = 'white';
-    const diceNum = (player === 'user') ? index + 5 : index - 5;
-    dices[diceNum].style.background = `url(${diceImageName})`;
+  if (Number.parseInt(attempsNum.innerText) < 3) {
+    
+    let condition = false;
+    if (player === 'user' && index < 10) condition = true;
+    else if (player === 'computer' && index >= 10) condition = true;
+	  
+	  if (savedDices[diceIndex] === null && diceClass === 'activeDice' && condition) {
+	    savedDices[diceIndex] = dice.id;
+	    dice.style.background = 'white';
+	    const diceImageName = diceNames[savedDices[diceIndex] - 1];
+	    const diceNum = (player === 'user') ? index - 5 : index + 5;
+	    dices[diceNum].style.background = `url(${diceImageName})`;
+	  } else if (savedDices[diceIndex] != null && diceClass === 'savedDice' && condition) {
+	    const diceImageName = diceNames[savedDices[diceIndex] - 1];
+	    savedDices[diceIndex] = null;
+	    dice.style.background = 'white';
+	    const diceNum = (player === 'user') ? index + 5 : index - 5;
+	    dices[diceNum].style.background = `url(${diceImageName})`;
+	  }
+  
   }
 
 }
@@ -161,6 +182,7 @@ const saveValueInTable = column => {
     for (const key in savedDices) {
       savedDices[key] = null;
     }
+    checkGameEnd();
 	  player = (player === 'user') ? 'computer' : 'user';
 	  attempsNum.innerText = 3;
   }
@@ -170,3 +192,58 @@ rollDiceButton.addEventListener('click', rollDice);
 dices.forEach((dice, index) => dice.addEventListener('click', save_deleteDice.bind(null, dice, index)));
 userColumn.forEach((column, index) => column.addEventListener('click', saveValueInTable.bind(null, column)));
 computerColumn.forEach((column, index) => column.addEventListener('click', saveValueInTable.bind(null, column)));
+
+const heuristicFunc = () => {
+  bestResult = [0, 0];
+  computerColumn.forEach((column, index) => {
+    const columnValue = Number.parseInt(column.innerText);
+    if (columnValue > bestResult[0] && column.style['background-color'] === 'yellow') {
+      bestResult[0] = columnValue;
+      bestResult[1] = index;
+    }
+  });
+}
+
+const checkProbabilities = () => {
+  const quantitySavedDices = 0;
+  for (const key in savedDices) {
+    if (savedDices[key] != null) quantitySavedDices++;
+  }
+  // if quantitySavedDices === 0
+  const straight = 2 * (5 / 6) * (4 / 6) * (3 / 6) * (2 / 6) * (1 / 6);
+  const fullHouse = (6 * 5 * 5) / (6 ** 5);
+  const fourOneType = 6 * (5 * ((1 / 6) ** 4) * (5 / 6));
+  const general = 6 * ((1 / 6) ** 5);
+  console.log(straight);
+  console.log(fullHouse);
+  console.log(fourOneType);
+  console.log(general);
+}
+
+const computerAlgorithm = () => {
+  rollDice();
+  let bestResult = [0, 0];
+  computerColumn.forEach((column, index) => {
+    const columnValue = Number.parseInt(column.innerText);
+    if (columnValue > bestResult[0] && column.style['background-color'] === 'yellow') {
+      bestResult[0] = columnValue;
+      bestResult[1] = index;
+    }
+  });
+  checkProbabilities();
+  const bestColumn = computerColumn[bestResult[1]];
+  // console.log(bestResult[1]);
+  // saveValueInTable(bestColumn);
+}
+
+const startGame = () => {
+  rollDiceButton.addEventListener('click', rollDice);
+  dices.forEach((dice, index) => dice.addEventListener('click', save_deleteDice.bind(null, dice, index)));
+  userColumn.forEach((column, index) => column.addEventListener('click', () => {
+    saveValueInTable(column);
+    if (player === 'computer') computerAlgorithm();  
+  }));
+  computerColumn.forEach((column, index) => column.addEventListener('click', saveValueInTable.bind(null, column)));
+};
+
+startGame();
