@@ -90,7 +90,7 @@ const checkFullHouse = (numbers, rollNum) => {
 
 const checkFourOneType = (numbers, rollNum) => {
   let result = 0;
-  if (numbers.includes(4)) result = (rollNum === '3') ? 45 : 40;
+  if (numbers.includes(4) || numbers.includes(5)) result = (rollNum === '3') ? 45 : 40;
   return result;
 };
 
@@ -133,6 +133,9 @@ const rollDice = () => {
     }
     checkCombinations(numbers, attempsNum.innerText);
     attempsNum.innerText--;
+
+    // DELETE
+    checkProbabilities();
   }
 }
 
@@ -204,20 +207,109 @@ const heuristicFunc = () => {
   });
 }
 
-const checkProbabilities = () => {
-  const quantitySavedDices = 0;
-  for (const key in savedDices) {
-    if (savedDices[key] != null) quantitySavedDices++;
+const checkStraightProbability = (savedArr, quantitySavedDices) => {
+  let straight = 1;
+
+  if (savedArr.includes(2) || savedArr.includes(3) || savedArr.includes(4) || savedArr.includes(5)) {
+    straight = 0;
+  } else if (savedArr[0] >= 1 && savedArr[5] >= 1) {
+    straight = 0;
+  } else {
+    for (let i = 1; i <= 5 - quantitySavedDices; i++) {
+    	straight = straight * i
+    }
+    straight = straight * ((1 / 6) ** (5 - quantitySavedDices));
+    if (savedArr[0] === 0 && savedArr[5] === 0) straight = straight * 2;
   }
-  // if quantitySavedDices === 0
-  const straight = 2 * (5 / 6) * (4 / 6) * (3 / 6) * (2 / 6) * (1 / 6);
-  const fullHouse = (6 * 5 * 5) / (6 ** 5);
-  const fourOneType = 6 * (5 * ((1 / 6) ** 4) * (5 / 6));
-  const general = 6 * ((1 / 6) ** 5);
-  console.log(straight);
-  console.log(fullHouse);
+  return straight;
+}
+
+const checkGeneralProbability = (savedArr, quantitySavedDices) => {
+  let general = 1;
+
+  if (!(savedArr.includes(quantitySavedDices))) {
+    general = 0;
+  } else if (quantitySavedDices === 0) {
+    general = 6 * ((1 / 6) ** 5);
+  } else {
+    general = (1 / 6) ** (5 - quantitySavedDices);
+  }
+  return general;
+}
+
+const checkFourOneTypeProbability = (savedArr, quantitySavedDices) => {
+  let fourOneType = 1;
+  console.log(savedArr);
+
+  if (quantitySavedDices === 4 && (!(savedArr.includes(2) || savedArr.includes(3))) ) {
+    fourOneType = 0;
+  } else if (quantitySavedDices === 3 && (!(savedArr.includes(2) || savedArr.includes(3)))) {
+    fourOneType = 0;
+  } else if (savedArr.includes(quantitySavedDices)) {
+    fourOneType = ((5 - quantitySavedDices) * ((1 / 6) ** (4 - quantitySavedDices)) * (5 / 6));
+    if (quantitySavedDices === 0) fourOneType = fourOneType * 6;
+    if (quantitySavedDices === 1) fourOneType += (5 * ((1 / 6) ** 4));
+  } else {
+    fourOneType = ((1 / 6) ** (5 - quantitySavedDices));
+    if (quantitySavedDices === 2) fourOneType = fourOneType * 2;
+  }
+
+  return fourOneType;
+}
+
+const checkProbabilities = () => {
+
+  let arrNums = [savedDices['0'], savedDices['1'], savedDices['2'], savedDices['3'], savedDices['4']];
+
+  const savedArr = checkNumbers(arrNums);
+  let quantitySavedDices = 0;
+
+  for (let num = 0; num < savedArr.length; num++) {
+    quantitySavedDices += savedArr[num];
+  };
+  
+  const straight = checkStraightProbability(savedArr, quantitySavedDices);
+  const general = checkGeneralProbability(savedArr, quantitySavedDices);
+  const fourOneType = checkFourOneTypeProbability(savedArr, quantitySavedDices) + general; 
+  
+  // console.log(straight);
+  // console.log(general);
   console.log(fourOneType);
-  console.log(general);
+
+  /*
+   if  quantity === 5 do not need to count probabilities
+   */
+
+    /*
+    FIND ForOneType PROBABILITY
+    if (saveDices includes 3 or more different types or 2 type 2 nums then ForOneType = 0)
+    else if (all Nums are one type) ForOneType = general + ((5 - quantity) * ((1 / 6) ** (4 - quantity)) * (5 / 6))
+      if (quantity === 0) ForOneType = ForOneType * 6
+      if (quantity === 1) ForOneType += (5 * ((1 / 6) ** 4));
+    else {
+      ForOneType = general + {
+	      ((1 / 6) ** (5 - quantity))
+	      if (quantity === 2) ForOneType = ForOneType * 2;
+      }
+    }
+    */
+
+
+    /*
+    FIND FullHouse PROBABILITY
+    if (savedDices includes 3 or more diff types || savedDices includes 4 one type)
+    else if (savedDices includes one type) FullHouse = 5;
+      if (quantity === 1) FullHouse = 34 * ((1 / 6) ** 4);
+      if (quantity === 2) FullHouse = 20 * ((1 / 6) ** 3)
+      if (quantity === 3) FullHouse = 5 * ((1 / 6) ** 2);
+    else if (saveDices includes diff types)
+      if (quantity === 2) FullHouse = 1 / 36;
+      if (quantity === 3) FullHouse = 3 / 36;
+      if (quantity === 4 and includes (3 + 1)) FullHouse = 1 / 6;
+      if (quantity === 4 and includes (2 + 2)) FullHouse = 2 / 5;  
+      
+     */
+
 }
 
 const computerAlgorithm = () => {
