@@ -27,8 +27,8 @@ const generateDices = () => {
 }
 
 const clearDiceRow = () => {
-	const endDiceNum = (player === 'user') ? 10 : 20;
-	const startDiceNum = (player === 'user') ? 0 : 10;
+	const endDiceNum = (player === 'user') ? 20 : 10;
+	const startDiceNum = (player === 'user') ? 10 : 0;
   for (let index = startDiceNum; index < endDiceNum; index++) {
     dices[index].style.background = 'white';
   }
@@ -46,8 +46,9 @@ const countResult = () => {
 
 const checkGameEnd = () => {
   const closedRows = document.querySelectorAll('#close');
-  if (closedRows.length === 20) {
-    const message = (Number.parseInt(userResult.innerText) > Number.parseInt(computerResult.innerText)) ? 'You win!' : 'You lose!';
+  if (closedRows.length === 20 || Number.parseInt(userResult.innerText) > 1000 || Number.parseInt(computerResult.innerText) > 1000) {
+    let message = (Number.parseInt(userResult.innerText) > Number.parseInt(computerResult.innerText)) ? 'You win!' : 'You lose!';
+    if (Number.parseInt(userResult.innerText) === Number.parseInt(computerResult.innerText)) message = 'Draw!';
     rollDiceButton.style.display = 'none';
     alert (message);
   }
@@ -115,6 +116,9 @@ const checkCombinations = (numbersArr, rollNum) => {
 };
 
 const rollDice = () => {
+
+  if (attempsNum.innerText == 3) clearDiceRow();
+
   const diff = (player === 'user') ? 5 : 10;
   if (attempsNum.innerText >= 1) {
     const newDices = generateDices();
@@ -174,17 +178,18 @@ const saveValueInTable = column => {
      
     });
 
-    clearDiceRow();
     countResult();
     for (const key in savedDices) {
       savedDices[key] = null;
     }
-    checkGameEnd();
+
 	  player = (player === 'user') ? 'computer' : 'user';
+	  if (player === 'computer') rollDiceButton.style.display = 'none';
+	  else rollDiceButton.style.display = 'block';
+    checkGameEnd();
 	  attempsNum.innerText = 3;
   }
 };
-
 
 const checkStraightProbability = (savedArr, quantitySavedDices) => {
   let straight = 1;
@@ -218,8 +223,10 @@ const checkGeneralProbability = (savedArr, quantitySavedDices) => {
 
 const checkFourOneTypeProbability = (savedArr, quantitySavedDices) => {
   let fourOneType = 1;
-
-  if (quantitySavedDices === 4 && (!(savedArr.includes(2) || savedArr.includes(3))) ) {
+  
+  if (savedArr.includes(4)) fourOneType = 5 / 6;
+  else if (quantitySavedDices === 5) fourOneType = 0;
+  else if (quantitySavedDices === 4 && (!savedArr.includes(3)) ) {
     fourOneType = 0;
   } else if (quantitySavedDices === 3 && (!(savedArr.includes(2) || savedArr.includes(3)))) {
     fourOneType = 0;
@@ -237,8 +244,10 @@ const checkFourOneTypeProbability = (savedArr, quantitySavedDices) => {
 
 const checkFullHouseProbability = (savedArr, quantitySavedDices) => {
   let fullHouse = 1;
-
-  if (savedArr.includes(4)) fullHouse = 0;
+  
+  
+  if (savedArr.includes(2) && savedArr.includes(3)) return fullHouse;
+  else if (savedArr.includes(4)) fullHouse = 0;
   else if (savedArr.includes(quantitySavedDices)) {
   	if (quantitySavedDices === 0) fullHouse = 10 * 5 * ((1 / 6) ** 4);
     if (quantitySavedDices === 1) fullHouse = 34 * ((1 / 6) ** 4);
@@ -249,7 +258,7 @@ const checkFullHouseProbability = (savedArr, quantitySavedDices) => {
   else if (quantitySavedDices === 4 && savedArr.includes(3)) fullHouse = 1 / 6;
   else if (quantitySavedDices === 4 && savedArr.includes(2) && !(savedArr.includes(1)) ) fullHouse = 2 / 6;
   else fullHouse = 0;
-
+  
   return fullHouse;
 }
 
@@ -259,22 +268,72 @@ const checkProbabilities = () => {
 
   const savedArr = checkNumbers(arrNums);
   let quantitySavedDices = 0;
+  const combinationsPrice = { 'straight': 20, 'fullHouse': 30, 'fourOneType': 40, 'general': 60 };
 
   for (let num = 0; num < savedArr.length; num++) {
     quantitySavedDices += savedArr[num];
   };
-  
-  const straight = checkStraightProbability(savedArr, quantitySavedDices);
-  const general = checkGeneralProbability(savedArr, quantitySavedDices);
-  const fourOneType = checkFourOneTypeProbability(savedArr, quantitySavedDices) + general; 
-  const fullHouse = checkFullHouseProbability(savedArr, quantitySavedDices);
+
+  let straight = 0;
+  let general = 0;
+  let fourOneType = 0;
+  let fullHouse = 0;
+
+  if (computerColumn[6].style['background-color'] === 'yellow') {
+    straight = checkStraightProbability(savedArr, quantitySavedDices) * combinationsPrice['straight'];
+  }
+  if (computerColumn[9].style['background-color'] === 'yellow') {
+    general = checkGeneralProbability(savedArr, quantitySavedDices) * combinationsPrice['general'];
+  }
+  if (computerColumn[8].style['background-color'] === 'yellow') {
+  	if (general === 60) fourOneType = 40;
+  	else {
+  	const firstPart = checkFourOneTypeProbability(savedArr, quantitySavedDices);
+  	const secondPart = checkGeneralProbability(savedArr, quantitySavedDices);
+  	fourOneType = (firstPart + secondPart) * combinationsPrice['fourOneType'];
+  	}
+  }
+  if (computerColumn[7].style['background-color'] === 'yellow') {
+    fullHouse = checkFullHouseProbability(savedArr, quantitySavedDices) * combinationsPrice['fullHouse'];
+  }
 
   return [straight, fullHouse, fourOneType, general];
 }
 
+const heuristicFunc = (names, bestMove) => {
+
+  const probabilities = checkProbabilities();
+  probabilities.forEach((el, index) => {
+    if (el > bestMove['value']) {
+      bestMove['value'] = el;
+      bestMove['combinationName'] = names[index];
+      bestMove['savedCombination'] = {};
+      for (const key in savedDices) {
+        bestMove['savedCombination'][key] = savedDices[`${key}`];
+      }
+    }
+  });
+};
+
+const startRecursia = async (startDice, names, bestMove) => {
+  if (startDice === 15) return;
+  for (let diceNum = startDice; diceNum < 15; diceNum++) {
+    save_deleteDice(dices[diceNum], diceNum);
+    // await sleep(100);
+    heuristicFunc(names, bestMove);
+    await startRecursia((diceNum + 1), names, bestMove);
+    save_deleteDice(dices[diceNum + 5], (diceNum + 5));
+    // await sleep(100);
+  }
+}
+
 const computerAlgorithm = async () => {
+
   rollDice();
-  let bestResult = [0, 0];
+  await sleep(1000);
+
+  const bestResult = [0, 0];
+	  
   computerColumn.forEach((column, index) => {
     const columnValue = Number.parseInt(column.innerText);
     if (columnValue > bestResult[0] && column.style['background-color'] === 'yellow') {
@@ -282,77 +341,63 @@ const computerAlgorithm = async () => {
       bestResult[1] = index;
     }
   });
+
+  if (attempsNum.innerText == 2) {
+    
+    if (bestResult[0] >= 25) {
+      const bestColumn = computerColumn[bestResult[1]];
+      saveValueInTable(bestColumn);
+      return;
+    };
   
+  };
+
+  if (attempsNum.innerText == 0) {
+    console.log(bestResult);
+    return;  
+  };
+
   const names = ['straight', 'fullHouse', 'fourOneType', 'general'];
 
   let counter = 0;
+  const bestMove = {'value': 0, 'savedCombination': {}, 'combinationName': null};
 
-  for (let i = 10; i < 15; i++) {
-  	counter++;
-    save_deleteDice(dices[i], i);
-    await sleep(1000);
-    for (let j = i + 1; j < 15; j++) {
-      counter++;
-      save_deleteDice(dices[j], j);
-      await sleep(1000);
-        for (let k = j + 1; k < 15; k++) {
-           // counter++;
-           // await sleep(1000);
-           save_deleteDice(dices[k], k);
-           for (let q = k + 1; q < 15; q++) {
-             // counter++;
-             // await sleep(1000);
-             save_deleteDice(dices[q], q);
-             for (let l = q + 1; l < 15; l++) {
-               // counter++;
-               // await sleep(1000);
-               save_deleteDice(dices[l], l);
-               // await sleep(1000);
-               save_deleteDice(dices[l + 5], (l + 5));
-             }
-             // await sleep(1000);
-             save_deleteDice(dices[q + 5], (q + 5));
-           }
-           // await sleep(1000);
-           save_deleteDice(dices[k + 5], (k + 5));
-        }
-      // await sleep(1000);
-      save_deleteDice(dices[j + 5], (j + 5));
-      await sleep(1000);
-    }
-
-    // const probabilities = checkProbabilities();
-    // const best = [probabilities[0], names[0]];
-    /*probabilities.forEach((el, index) => {
-      if (el > best[0]) {
-        best[0] = el;
-        best[1] = names[index];
-      }
-    });*/
-    // console.log(probabilities);
-    // console.log(i, best);
-    // await sleep(1000);
-    save_deleteDice(dices[i + 5], (i + 5));
-    await sleep(1000);
-  }
-  console.log(counter);
+  await startRecursia(10, names, bestMove);
   
-  const bestColumn = computerColumn[bestResult[1]];
-  // console.log(bestResult[1]);
-  // saveValueInTable(bestColumn);
-};
+  const activePoints = [0, 0, 0, 0, 0, 0];
 
-
-const heuristicFunc = () => {
-  bestResult = [0, 0];
-  computerColumn.forEach((column, index) => {
-    const columnValue = Number.parseInt(column.innerText);
-    if (columnValue > bestResult[0] && column.style['background-color'] === 'yellow') {
-      bestResult[0] = columnValue;
-      bestResult[1] = index;
+  for (let cellNum = 0; cellNum < 6; cellNum++) {
+    if (computerColumn[cellNum].style['background-color'] === 'yellow') {
+      activePoints[cellNum] = Number.parseInt(computerColumn[cellNum].innerText);
     }
-  });
+  }
+
+  activePoints.forEach((point, index) => {
+    if ((point / 2.2) > bestMove['value']) {
+      bestMove['value'] = point / 2.2;
+    	for (let diceNum = 10; diceNum < 15; diceNum++) {
+    	  if (Number.parseInt(dices[diceNum].id) === (index + 1)) {
+          bestMove['savedCombination'][`${diceNum - 10}`] = Number.parseInt(dices[diceNum].id);
+    	  } else {
+          bestMove['savedCombination'][`${diceNum - 10}`] = null;
+    	  }
+    	}
+      bestMove['combinationName'] = 'number => ' + (index + 1);
+    }
+  })
+
+  for (const diceNum in bestMove['savedCombination']) {
+    if (bestMove['savedCombination'][diceNum] != null) {
+    	const diceIndex = 10 + Number.parseInt(diceNum);
+      // await sleep(500);
+      save_deleteDice(dices[diceIndex], diceIndex);
+    }
+  }
+
+  console.log(bestMove);
+  await computerAlgorithm();
 };
+
 
 const startGame = () => {
   rollDiceButton.addEventListener('click', rollDice);
