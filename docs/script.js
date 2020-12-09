@@ -10,12 +10,15 @@ const userResult = document.querySelector('.playerTotal');
 const computerResult = document.querySelector('.computerTotal');
 let player = 'user';
 
+// make fake pause
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 
 const randomFromTo = (from, to) => Math.floor(from + (Math.random() * (to - from + 1)));
 
+// list of temporarily saved dices
 const savedDices = {'0': null, '1': null, '2': null, '3': null, '4': null};
 
+// generate new dices (5 or less)
 const generateDices = () => {
   const newDices = {};
   for (const key in savedDices) {
@@ -26,6 +29,7 @@ const generateDices = () => {
   return newDices;
 }
 
+// clear the dices in the field after making a decision
 const clearDiceRow = () => {
 	const endDiceNum = (player === 'user') ? 20 : 10;
 	const startDiceNum = (player === 'user') ? 10 : 0;
@@ -34,16 +38,20 @@ const clearDiceRow = () => {
   }
 };
 
+// count total for either the user or the computer 
 const countResult = () => {
 	const resultColumn = (player === "user") ? userResult : computerResult;
 	const activeColumn = (player === "user") ? userColumn : computerColumn;
   let result = 0;
+  // the summary of the column of the active player where cell is closed
   activeColumn.forEach(column => {
     if (column.id === 'close') result += Number.parseInt(column.innerText);
   });
   resultColumn.innerText = result;
 };
 
+// either all cells are closed or the active player has received the general from the first time
+// and shows the message who is the winner
 const checkGameEnd = () => {
   const closedRows = document.querySelectorAll('#close');
   if (closedRows.length === 20 || Number.parseInt(userResult.innerText) > 1000 || Number.parseInt(computerResult.innerText) > 1000) {
@@ -54,6 +62,8 @@ const checkGameEnd = () => {
   }
 };
 
+// counts how many dices of each type are available
+// for example [0, 2, 1, 1, 0, 1] arr.sum must be equal 5 
 const checkNumbers = (numbersArr) => {
   const result = [0, 0, 0, 0, 0, 0];
   numbersArr.forEach(number => {
@@ -98,6 +108,7 @@ const checkGeneral = (numbers, rollNum) => {
   return result;
 }
 
+// checks all combinations and displays them (yellow color) in the game table
 const checkCombinations = (numbersArr, rollNum) => {
   const activeColumn = (player === 'user' ? userColumn : computerColumn);
   const result = [];
@@ -115,6 +126,7 @@ const checkCombinations = (numbersArr, rollNum) => {
   });
 };
 
+// rolls dices and runs combinations checking
 const rollDice = () => {
 
   if (attempsNum.innerText == 3) clearDiceRow();
@@ -137,6 +149,7 @@ const rollDice = () => {
   }
 }
 
+// save or makes the dice active again
 const save_deleteDice = (dice, index) => {
   const diceIndex = index % 5;
   const diceClass = dice.classList[0];
@@ -164,6 +177,10 @@ const save_deleteDice = (dice, index) => {
 
 }
 
+// makes a combination in the game table
+// change the color of this cell combination to red
+// change active user
+// check game over
 const saveValueInTable = column => {
   if (column.style['background-color'] === 'yellow') {
     column.id = 'close';
@@ -262,6 +279,7 @@ const checkFullHouseProbability = (savedArr, quantitySavedDices) => {
   return fullHouse;
 }
 
+// sets the value of each combination depending on its price and probability
 const checkProbabilities = () => {
 
   let arrNums = [savedDices['0'], savedDices['1'], savedDices['2'], savedDices['3'], savedDices['4']];
@@ -300,13 +318,13 @@ const checkProbabilities = () => {
   return [straight, fullHouse, fourOneType, general];
 }
 
-const heuristicFunc = (names, bestMove) => {
+// finds the combination with the best value (price * probability)
+const heuristicFunc = bestMove => {
 
   const probabilities = checkProbabilities();
   probabilities.forEach((el, index) => {
     if (el > bestMove['value']) {
       bestMove['value'] = el;
-      bestMove['combinationName'] = names[index];
       bestMove['savedCombination'] = {};
       for (const key in savedDices) {
         bestMove['savedCombination'][key] = savedDices[`${key}`];
@@ -315,63 +333,95 @@ const heuristicFunc = (names, bestMove) => {
   });
 };
 
-const startRecursia = async (startDice, names, bestMove) => {
+// changes dices position in order to get all possible combinations of dices
+// and runs heuristicFunc for every combination 
+const startRecursia = async (startDice, bestMove) => {
   if (startDice === 15) return;
   for (let diceNum = startDice; diceNum < 15; diceNum++) {
     save_deleteDice(dices[diceNum], diceNum);
     // await sleep(100);
-    heuristicFunc(names, bestMove);
-    await startRecursia((diceNum + 1), names, bestMove);
+    heuristicFunc(bestMove);
+    await startRecursia((diceNum + 1), bestMove);
     save_deleteDice(dices[diceNum + 5], (diceNum + 5));
     // await sleep(100);
   }
 }
 
+// computer finds the best combination of points and sets its in game table
+const computerdDecision = (attemp) => {
+  
+  const bestResult = [-1, 0];
+
+  computerColumn.forEach((column, index) => {
+    
+    const columnValue = Number.parseInt(column.innerText);
+    
+    // only for: straight, fullHouse, fourOneType, general.
+    // or the first toss was lucky
+    if ( ((attemp === 2 && columnValue != 0) || (attemp === 0)) && index >= 6) {
+	    
+	    if (columnValue > bestResult[0] && column.style['background-color'] === 'yellow') {
+	      bestResult[0] = columnValue;
+	      bestResult[1] = index;
+	    };
+    
+    // for number combinations
+    } else if (attemp === 0 && index < 6) {
+    	
+    	if ((columnValue / (index + 1)) > bestResult[0] && column.style['background-color'] === 'yellow') {
+    	  bestResult[0] = (columnValue / (index + 1));
+    	  bestResult[1] = index;
+    	};
+    
+    }
+  });
+  
+  // if the first toss wasn`t lucky then just the game continues
+  if (bestResult[0] === -1) {
+    return false;
+  }
+
+  // sets the best combination in the game table
+  const bestColumn = computerColumn[bestResult[1]];
+  saveValueInTable(bestColumn);
+  return true;
+}
+
+// launches all previouse actions when tha active player is computer
+// responsible for rolling the dice
 const computerAlgorithm = async () => {
 
   rollDice();
   await sleep(1000);
 
-  const bestResult = [0, 0];
-	  
-  computerColumn.forEach((column, index) => {
-    const columnValue = Number.parseInt(column.innerText);
-    if (columnValue > bestResult[0] && column.style['background-color'] === 'yellow') {
-      bestResult[0] = columnValue;
-      bestResult[1] = index;
-    }
-  });
-
+  // checks wheter the first toss was lucky
   if (attempsNum.innerText == 2) {
-    
-    if (bestResult[0] >= 25) {
-      const bestColumn = computerColumn[bestResult[1]];
-      saveValueInTable(bestColumn);
-      return;
-    };
-  
+  	const result = computerdDecision(2);
+    if (result) return;
   };
 
+  // sets value in game table
   if (attempsNum.innerText == 0) {
-    console.log(bestResult);
-    return;  
-  };
+    computerdDecision(0);
+    return;
+  }
 
-  const names = ['straight', 'fullHouse', 'fourOneType', 'general'];
+  const bestMove = { 'value': 0, 'savedCombination': {} };
 
-  let counter = 0;
-  const bestMove = {'value': 0, 'savedCombination': {}, 'combinationName': null};
-
-  await startRecursia(10, names, bestMove);
+  await startRecursia(10, bestMove);
   
+  // number cells
   const activePoints = [0, 0, 0, 0, 0, 0];
 
+  // fill activePoints
   for (let cellNum = 0; cellNum < 6; cellNum++) {
     if (computerColumn[cellNum].style['background-color'] === 'yellow') {
       activePoints[cellNum] = Number.parseInt(computerColumn[cellNum].innerText);
     }
   }
 
+  // checks whether the choise of number is better than a complex combination
+  // 2.2 my coefficient
   activePoints.forEach((point, index) => {
     if ((point / 2.2) > bestMove['value']) {
       bestMove['value'] = point / 2.2;
@@ -382,23 +432,22 @@ const computerAlgorithm = async () => {
           bestMove['savedCombination'][`${diceNum - 10}`] = null;
     	  }
     	}
-      bestMove['combinationName'] = 'number => ' + (index + 1);
     }
   })
 
+  // saves the best combination of dice in the field
   for (const diceNum in bestMove['savedCombination']) {
     if (bestMove['savedCombination'][diceNum] != null) {
     	const diceIndex = 10 + Number.parseInt(diceNum);
-      // await sleep(500);
       save_deleteDice(dices[diceIndex], diceIndex);
     }
   }
 
-  console.log(bestMove);
+  // repeat this function
   await computerAlgorithm();
 };
 
-
+// creates events for user actions and starts the game
 const startGame = () => {
   rollDiceButton.addEventListener('click', rollDice);
   dices.forEach((dice, index) => dice.addEventListener('click', save_deleteDice.bind(null, dice, index)));
